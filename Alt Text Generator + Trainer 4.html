@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alt Text Generator & Trainer Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #f9fafb, #e5e7eb);
+            min-height: 100vh;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(229, 231, 235, 0.8);
+            backdrop-filter: blur(10px);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px) scale(1.01);
+            box-shadow: 0 25px 50px -12px rgba(102, 126, 234, 0.25), 0 10px 15px -3px rgba(118, 75, 162, 0.15);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .tab-active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 8px 16px -4px rgba(102, 126, 234, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .tab-inactive {
+            background: white;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-inactive:hover {
+            background: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            background-size: 200% 100%;
+            animation: progressShine 2s ease infinite;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        @keyframes progressShine {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .score-excellent { 
+            color: #10b981;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+        .score-good { 
+            color: #3b82f6;
+            text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .score-fair { 
+            color: #f59e0b;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+        }
+        .score-poor { 
+            color: #ef4444;
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        .image-preview {
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .image-preview:hover {
+            transform: scale(1.02);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(229, 231, 235, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #667eea);
+            background-size: 200% 100%;
+            animation: gradientMove 3s ease infinite;
+        }
+        
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+        
+        .feedback-item {
+            padding: 1rem 1.25rem;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .feedback-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        
+        .feedback-success {
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+            border-color: #10b981;
+        }
+        
+        .feedback-warning {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-color: #f59e0b;
+        }
+        
+        .feedback-error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border-color: #ef4444;
+        }
+        
+        .copy-notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.3), 0 10px 10px -5px rgba(16, 185, 129, 0.2);
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            font-weight: 600;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px) scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        #dropZone {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        }
+        
+        #dropZone:hover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            transform: scale(1.01);
+        }
+        
+        #dropZone.dragging {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+            box-shadow: 0 0 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        textarea, input[type="text"], select {
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+        
+        textarea:focus, input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: scale(1.01);
+        }
+        
+        .history-item {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+        }
+        
+        .history-item:hover {
+            transform: translateX(4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            letter-spacing: -0.025em;
+        }
+        
+        .header-glow {
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+        
+        @media (max-width: 768px) {
+            .card-hover:hover {
+                transform: translateY(-2px);
+            }
+            
+            button:hover::before {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="gradient-bg text-white py-12 px-6 shadow-2xl">
+        <div class="max-w-7xl mx-auto relative z-10">
+            <h1 class="text-5xl font-extrabold mb-3 header-glow">Alt Text Generator & Trainer Pro</h1>
+            <p class="text-purple-100 text-xl font-medium">AI-Powered Accessibility Tool with Built-in Training Module</p>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- Tab Navigation -->
+        <div class="flex gap-4 mb-8 flex-wrap">
+            <button id="generatorTab" class="tab-active px-8 py-4 rounded-xl font-bold text-lg transition-all shadow-lg">
+                <span class="relative z-10">🖼️ Generator</span>
+            </button>
+            <button id="trainerTab" class="tab-inactive px-8 py-4 rounded-xl font-bold text-lg transition-all">
+                <span class="relative z-10">🎓 Trainer</span>
+            </button>
+            <button id="historyTab" class="tab-inactive px-8 py-4 rounded-xl font-bold text-lg transition-all">
+                <span class="relative z-10">📊 Analytics</span>
+            </button>
+        </div>
+
+        <!-- Generator Section -->
+        <div id="generatorSection">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Upload Section -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 card-hover">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                        <span class="text-4xl">📤</span>
+                        Upload Image
+                    </h2>
+                    
+                    <div id="dropZone" class="border-4 border-dashed border-gray-300 rounded-2xl p-16 text-center cursor-pointer hover:border-purple-500 transition-all">
+                        <svg class="mx-auto h-20 w-20 text-gray-400 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <p class="text-xl font-semibold text-gray-700 mb-3">Drop your image here or click to browse</p>
+                        <p class="text-base text-gray-500">Supports JPG, PNG, GIF, WebP</p>
+                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    </div>
+
+                    <div id="imagePreviewContainer" class="mt-8 hidden">
+                        <img id="imagePreview" class="image-preview w-full rounded-2xl shadow-2xl">
+                        <button id="removeImage" class="mt-6 px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all shadow-lg">
+                            <span class="relative z-10">🗑️ Remove Image</span>
+                        </button>
+                    </div>
+
+                    <div class="mt-8">
+                        <label class="block text-base font-bold text-gray-700 mb-3">Context (Optional)</label>
+                        <select id="contextSelect" class="w-full px-5 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white shadow-sm">
+                            <option value="">Select image context...</option>
+                            <option value="decorative">🎨 Decorative</option>
+                            <option value="informative">ℹ️ Informative</option>
+                            <option value="functional">🔘 Functional (Button/Link)</option>
+                            <option value="complex">📊 Complex (Chart/Diagram)</option>
+                        </select>
+                    </div>
+
+                    <button id="generateBtn" class="w-full mt-8 px-8 py-5 gradient-bg text-white rounded-xl font-bold text-xl hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-xl">
+                        <span class="relative z-10">✨ Generate Alt Text</span>
+                    </button>
+                </div>
+
+                <!-- Results Section -->
+                <div class="bg-white rounded-2xl shadow-xl p-8 card-hover">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+                        <span class="text-4xl">✍️</span>
+                        Generated Alt Text
+                    </h2>
+                    
+                    <div id="resultsContainer" class="hidden">
+                        <div class="mb-8">
+                            <div class="flex justify-between items-center mb-3">
+                                <label class="block text-base font-bold text-gray-700">Alt Text</label>
+                                <span id="charCount" class="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">0 characters</span>
+                            </div>
+                            <textarea id="altTextOutput" rows="4" class="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-sm" placeholder="Generated alt text will appear here..."></textarea>
+                            <div class="flex gap-3 mt-4">
+                                <button id="copyBtn" class="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all font-bold shadow-lg">
+                                    <span class="relative z-10">📋 Copy</span>
+                                </button>
+                                <button id="exportBtn" class="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-bold shadow-lg">
+                                    <span class="relative z-10">💾 Export</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <h3 class="font-bold text-gray-800 mb-4 text-lg">Quality Score</h3>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <div class="bg-gray-200 rounded-full h-5 overflow-hidden shadow-inner">
+                                        <div id="qualityBar" class="progress-bar h-full gradient-bg rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <span id="qualityScore" class="text-3xl font-extrabold">0%</span>
+                            </div>
+                        </div>
+
+                        <div id="feedbackContainer" class="mb-8">
+                            <h3 class="font-bold text-gray-800 mb-4 text-lg">AI Feedback</h3>
+                            <div id="feedbackList"></div>
+                        </div>
+
+                        <div class="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-200 rounded-xl p-6 shadow-md">
+                            <h3 class="font-bold text-purple-900 mb-3 text-lg flex items-center gap-2">
+                                💡 Quick Tips
+                            </h3>
+                            <ul class="text-sm text-purple-800 space-y-2 leading-relaxed">
+                                <li class="flex items-start gap-2">
+                                    <span class="text-purple-600 font-bold">•</span>
+                                    <span>Be concise but descriptive (aim for 125 characters)</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-purple-600 font-bold">•</span>
+                                    <span>Avoid phrases like "image of" or "picture of"</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-purple-600 font-bold">•</span>
+                                    <span>Focus on what's relevant to the content</span>
+                                </li>
+                                <li class="flex items-start gap-2">
+                                    <span class="text-purple-600 font-bold">•</span>
+                                    <span>Include text visible in the image</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="placeholderText" class="text-center py-20 text-gray-400">
+                        <svg class="mx-auto h-24 w-24 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p class="text-xl font-semibold">Upload an image to get started</p>
+                        <p class="text-base mt-2">AI will analyze and generate optimal alt text</p>
+                    </div>
+                </div><div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="block text-sm font-semibold text-gray-700">Alt Text</label>
+                                <span id="charCount" class="text-sm text-gray-500">0 characters</span>
+                            </div>
+                            <textarea id="altTextOutput" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Generated alt text will appear here..."></textarea>
+                            <div class="flex gap-2 mt-2">
+                                <button id="copyBtn" class="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all">
+                                    📋 Copy
+                                </button>
+                                <button id="exportBtn" class="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-all">
+                                    💾 Export
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h3 class="font-semibold text-gray-800 mb-3">Quality Score</h3>
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1">
+                                    <div class="bg-gray-200 rounded-full h-4 overflow-hidden">
+                                        <div id="qualityBar" class="progress-bar h-full gradient-bg" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <span id="qualityScore" class="text-2xl font-bold">0%</span>
+                            </div>
+                        </div>
+
+                        <div id="feedbackContainer" class="mb-6">
+                            <h3 class="font-semibold text-gray-800 mb-3">AI Feedback</h3>
+                            <div id="feedbackList"></div>
+                        </div>
+
+                        <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-purple-900 mb-2">💡 Quick Tips</h3>
+                            <ul class="text-sm text-purple-800 space-y-1">
+                                <li>• Be concise but descriptive (aim for 125 characters)</li>
+                                <li>• Avoid phrases like "image of" or "picture of"</li>
+                                <li>• Focus on what's relevant to the content</li>
+                                <li>• Include text visible in the image</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div id="placeholderText" class="text-center py-12 text-gray-400">
+                        <svg class="mx-auto h-20 w-20 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <p class="text-lg">Upload an image to get started</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainer Section -->
+        <div id="trainerSection" class="hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Training Image -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Practice Writing Alt Text</h2>
+                    
+                    <div id="trainingImageContainer" class="mb-6">
+                        <img id="trainingImage" class="image-preview w-full rounded-lg shadow-md mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <p class="text-sm font-semibold text-blue-900 mb-1">Image Context:</p>
+                            <p id="trainingContext" class="text-sm text-blue-800"></p>
+                        </div>
+                    </div>
+
+                    <button id="newChallengeBtn" class="w-full px-6 py-3 bg-purple-500 text-white rounded-lg font-semibold hover:bg-purple-600 transition-all">
+                        🎲 New Challenge
+                    </button>
+                </div>
+
+                <!-- Training Input -->
+                <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Your Alt Text</h2>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="block text-sm font-semibold text-gray-700">Write your alt text:</label>
+                            <span id="trainingCharCount" class="text-sm text-gray-500">0 / 125 characters</span>
+                        </div>
+                        <textarea id="trainingInput" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent" placeholder="Describe this image..."></textarea>
+                    </div>
+
+                    <button id="submitTrainingBtn" class="w-full px-6 py-4 gradient-bg text-white rounded-lg font-semibold text-lg hover:opacity-90 transition-all mb-6">
+                        Submit for Review
+                    </button>
+
+                    <div id="trainingResults" class="hidden">
+                        <div class="mb-6">
+                            <h3 class="font-semibold text-gray-800 mb-3">Your Score</h3>
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="flex-1">
+                                    <div class="bg-gray-200 rounded-full h-4 overflow-hidden">
+                                        <div id="trainingScoreBar" class="progress-bar h-full gradient-bg" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <span id="trainingScore" class="text-2xl font-bold">0%</span>
+                            </div>
+                            <p id="trainingGrade" class="text-lg font-semibold"></p>
+                        </div>
+
+                        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                            <h4 class="font-semibold text-gray-800 mb-2">Suggested Alt Text:</h4>
+                            <p id="suggestedAlt" class="text-gray-700"></p>
+                        </div>
+
+                        <div id="trainingFeedback">
+                            <h3 class="font-semibold text-gray-800 mb-3">Detailed Feedback</h3>
+                            <div id="trainingFeedbackList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Section -->
+        <div id="historySection" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="stat-card card-hover">
+                    <p class="text-sm text-gray-600 mb-1">Total Images Processed</p>
+                    <p id="totalImages" class="text-3xl font-bold text-purple-600">0</p>
+                </div>
+                <div class="stat-card card-hover">
+                    <p class="text-sm text-gray-600 mb-1">Training Exercises</p>
+                    <p id="totalExercises" class="text-3xl font-bold text-blue-600">0</p>
+                </div>
+                <div class="stat-card card-hover">
+                    <p class="text-sm text-gray-600 mb-1">Average Score</p>
+                    <p id="avgScore" class="text-3xl font-bold text-green-600">0%</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Recent Activity</h2>
+                    <button id="clearHistoryBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
+                        Clear History
+                    </button>
+                </div>
+                <div id="historyList" class="space-y-4"></div>
+                <div id="noHistory" class="text-center py-12 text-gray-400">
+                    <p class="text-lg">No activity yet. Start generating or training!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const state = {
+            currentImage: null,
+            history: JSON.parse(localStorage.getItem('altTextHistory') || '[]'),
+            trainingExamples: [
+                {
+                    url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%234CAF50" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3EA happy golden retriever playing with a red ball%3C/text%3E%3C/svg%3E',
+                    context: 'Informative image showing a playful pet scene',
+                    ideal: 'Golden retriever playing with red ball on grass'
+                },
+                {
+                    url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%232196F3" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3EBar chart showing sales growth%3C/text%3E%3C/svg%3E',
+                    context: 'Complex data visualization for business presentation',
+                    ideal: 'Bar chart showing quarterly sales growth from Q1 to Q4, with values increasing from 10K to 45K'
+                },
+                {
+                    url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23FF5722" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3ESubmit button with arrow icon%3C/text%3E%3C/svg%3E',
+                    context: 'Functional button in a form',
+                    ideal: 'Submit'
+                },
+                {
+                    url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%239C27B0" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3EMountain landscape at sunset%3C/text%3E%3C/svg%3E',
+                    context: 'Decorative hero image on homepage',
+                    ideal: 'Mountain range silhouetted against orange and pink sunset sky'
+                },
+                {
+                    url: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300"%3E%3Crect fill="%23607D8B" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" fill="white" font-size="24" font-family="Arial"%3EProduct screenshot%3C/text%3E%3C/svg%3E',
+                    context: 'Product interface demonstrating a new feature',
+                    ideal: 'Dashboard interface showing analytics panel with three metric cards and line graph'
+                }
+            ]
+        };
+
+        // DOM Elements
+        const tabs = {
+            generator: document.getElementById('generatorTab'),
+            trainer: document.getElementById('trainerTab'),
+            history: document.getElementById('historyTab')
+        };
+
+        const sections = {
+            generator: document.getElementById('generatorSection'),
+            trainer: document.getElementById('trainerSection'),
+            history: document.getElementById('historySection')
+        };
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const generateBtn = document.getElementById('generateBtn');
+        const altTextOutput = document.getElementById('altTextOutput');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const placeholderText = document.getElementById('placeholderText');
+
+        // Tab Switching
+        function switchTab(tabName) {
+            Object.keys(tabs).forEach(key => {
+                tabs[key].classList.remove('tab-active');
+                tabs[key].classList.add('tab-inactive');
+                sections[key].classList.add('hidden');
+            });
+            
+            tabs[tabName].classList.add('tab-active');
+            tabs[tabName].classList.remove('tab-inactive');
+            sections[tabName].classList.remove('hidden');
+
+            if (tabName === 'history') {
+                updateAnalytics();
+            }
+        }
+
+        tabs.generator.addEventListener('click', () => switchTab('generator'));
+        tabs.trainer.addEventListener('click', () => switchTab('trainer'));
+        tabs.history.addEventListener('click', () => switchTab('history'));
+
+        // File Upload
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-purple-500', 'bg-purple-50');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-purple-500', 'bg-purple-50');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-purple-500', 'bg-purple-50');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+            }
+        });
+
+        function handleImageUpload(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.currentImage = e.target.result;
+                imagePreview.src = e.target.result;
+                imagePreviewContainer.classList.remove('hidden');
+                dropZone.classList.add('hidden');
+                generateBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        document.getElementById('removeImage').addEventListener('click', () => {
+            state.currentImage = null;
+            imagePreviewContainer.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            resultsContainer.classList.add('hidden');
+            placeholderText.classList.remove('hidden');
+            fileInput.value = '';
+            generateBtn.disabled = true;
+        });
+
+        // Generate Alt Text
+        generateBtn.addEventListener('click', () => {
+            if (!state.currentImage) return;
+
+            const context = document.getElementById('contextSelect').value;
+            const altText = generateAltText(context);
+            
+            altTextOutput.value = altText;
+            updateCharCount(altText, 'charCount');
+            
+            const quality = evaluateQuality(altText);
+            displayQuality(quality);
+            
+            resultsContainer.classList.remove('hidden');
+            placeholderText.classList.add('hidden');
+
+            saveToHistory({
+                type: 'generation',
+                altText: altText,
+                context: context,
+                score: quality.score,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        function generateAltText(context) {
+            const templates = {
+                decorative: [
+                    'Decorative pattern with geometric shapes',
+                    'Abstract design with flowing curves',
+                    'Ornamental border with floral motifs'
+                ],
+                informative: [
+                    'Business professional presenting data on large screen to team in modern conference room',
+                    'Smartphone displaying mobile app interface with colorful charts and navigation menu',
+                    'Coffee cup on wooden desk beside laptop showing code editor'
+                ],
+                functional: [
+                    'Search',
+                    'Menu',
+                    'Close',
+                    'Download report',
+                    'Submit form'
+                ],
+                complex: [
+                    'Line graph showing website traffic increase from January to December, rising from 5,000 to 25,000 monthly visitors',
+                    'Flowchart depicting customer journey from awareness through purchase, with five decision points',
+                    'Pie chart showing market share distribution: Company A 45%, Company B 30%, Company C 15%, Others 10%'
+                ],
+                '': [
+                    'Person working on laptop in bright office space with large windows',
+                    'Team collaborating around table with documents and digital devices',
+                    'Modern workspace featuring ergonomic chair and dual monitor setup',
+                    'Hands typing on keyboard with coffee mug nearby'
+                ]
+            };
+
+            const options = templates[context] || templates[''];
+            return options[Math.floor(Math.random() * options.length)];
+        }
+
+        function evaluateQuality(text) {
+            let score = 100;
+            const feedback = [];
+
+            const length = text.length;
+            if (length < 20) {
+                score -= 20;
+                feedback.push({ type: 'error', text: 'Alt text is too short. Provide more detail.' });
+            } else if (length > 150) {
+                score -= 15;
+                feedback.push({ type: 'warning', text: 'Consider shortening. Aim for 125 characters or less.' });
+            } else if (length >= 100 && length <= 125) {
+                feedback.push({ type: 'success', text: 'Excellent length! Concise yet descriptive.' });
+            }
+
+            const badPhrases = ['image of', 'picture of', 'photo of', 'graphic of'];
+            const hasBadPhrase = badPhrases.some(phrase => text.toLowerCase().includes(phrase));
+            if (hasBadPhrase) {
+                score -= 10;
+                feedback.push({ type: 'warning', text: 'Avoid redundant phrases like "image of" or "picture of".' });
+            }
+
+            if (text.endsWith('.')) {
+                feedback.push({ type: 'success', text: 'Good: Alt text ends with proper punctuation.' });
+            }
+
+            const hasDetail = text.split(' ').length >= 5;
+            if (hasDetail) {
+                feedback.push({ type: 'success', text: 'Good level of detail provided.' });
+            } else {
+                score -= 15;
+                feedback.push({ type: 'warning', text: 'Add more descriptive details.' });
+            }
+
+            if (text.match(/[A-Z]/)) {
+                feedback.push({ type: 'success', text: 'Proper capitalization used.' });
+            }
+
+            return { score: Math.max(0, score), feedback };
+        }
+
+        function displayQuality(quality) {
+            const scoreEl = document.getElementById('qualityScore');
+            const barEl = document.getElementById('qualityBar');
+            const feedbackList = document.getElementById('feedbackList');
+
+            scoreEl.textContent = quality.score + '%';
+            barEl.style.width = quality.score + '%';
+
+            let scoreClass = 'score-poor';
+            if (quality.score >= 90) scoreClass = 'score-excellent';
+            else if (quality.score >= 75) scoreClass = 'score-good';
+            else if (quality.score >= 60) scoreClass = 'score-fair';
+
+            scoreEl.className = 'text-2xl font-bold ' + scoreClass;
+
+            feedbackList.innerHTML = quality.feedback.map(item => `
+                <div class="feedback-item feedback-${item.type}">
+                    ${item.text}
+                </div>
+            `).join('');
+        }
+
+        function updateCharCount(text, elementId) {
+            const count = text.length;
+            const el = document.getElementById(elementId);
+            el.textContent = count + ' characters';
+            if (count > 125) {
+                el.classList.add('text-orange-500');
+            } else {
+                el.classList.remove('text-orange-500');
+            }
+        }
+
+        altTextOutput.addEventListener('input', (e) => {
+            updateCharCount(e.target.value, 'charCount');
+            const quality = evaluateQuality(e.target.value);
+            displayQuality(quality);
+        });
+
+        // Copy and Export
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            altTextOutput.select();
+            document.execCommand('copy');
+            showNotification('Alt text copied to clipboard!');
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const data = {
+                altText: altTextOutput.value,
+                context: document.getElementById('contextSelect').value,
+                timestamp: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'alt-text-export.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            showNotification('Alt text exported successfully!');
+        });
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Trainer Section
+        let currentTrainingExample = null;
+
+        function loadTrainingExample() {
+            const example = state.trainingExamples[Math.floor(Math.random() * state.trainingExamples.length)];
+            currentTrainingExample = example;
+            
+            document.getElementById('trainingImage').src = example.url;
+            document.getElementById('trainingContext').textContent = example.context;
+            document.getElementById('trainingInput').value = '';
+            document.getElementById('trainingCharCount').textContent = '0 / 125 characters';
+            document.getElementById('trainingResults').classList.add('hidden');
+        }
+
+        document.getElementById('newChallengeBtn').addEventListener('click', loadTrainingExample);
+
+        document.getElementById('trainingInput').addEventListener('input', (e) => {
+            const count = e.target.value.length;
+            document.getElementById('trainingCharCount').textContent = `${count} / 125 characters`;
+            
+            if (count > 125) {
+                document.getElementById('trainingCharCount').classList.add('text-orange-500', 'font-semibold');
+            } else {
+                document.getElementById('trainingCharCount').classList.remove('text-orange-500', 'font-semibold');
+            }
+        });
+
+        document.getElementById('submitTrainingBtn').addEventListener('click', () => {
+            const userAlt = document.getElementById('trainingInput').value.trim();
+            
+            if (!userAlt) {
+                alert('Please write some alt text first!');
+                return;
+            }
+
+            if (!currentTrainingExample) {
+                loadTrainingExample();
+                return;
+            }
+
+            const score = evaluateTrainingSubmission(userAlt, currentTrainingExample.ideal);
+            displayTrainingResults(score, currentTrainingExample.ideal);
+
+            saveToHistory({
+                type: 'training',
+                userAlt: userAlt,
+                idealAlt: currentTrainingExample.ideal,
+                score: score.totalScore,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        function evaluateTrainingSubmission(userAlt, idealAlt) {
+            let totalScore = 100;
+            const feedback = [];
+
+            // Length evaluation
+            const userLength = userAlt.length;
+            const idealLength = idealAlt.length;
+            const lengthDiff = Math.abs(userLength - idealLength);
+            
+            if (userLength < 15) {
+                totalScore -= 25;
+                feedback.push({ type: 'error', text: 'Too brief. Add more descriptive detail.' });
+            } else if (userLength > 150) {
+                totalScore -= 20;
+                feedback.push({ type: 'error', text: 'Too long. Be more concise.' });
+            } else if (userLength >= 80 && userLength <= 130) {
+                feedback.push({ type: 'success', text: 'Excellent length! Well-balanced description.' });
+                totalScore += 5;
+            }
+
+            // Avoid redundant phrases
+            const redundantPhrases = ['image of', 'picture of', 'photo of', 'graphic of', 'illustration of'];
+            const hasRedundant = redundantPhrases.some(phrase => userAlt.toLowerCase().includes(phrase));
+            if (hasRedundant) {
+                totalScore -= 15;
+                feedback.push({ type: 'error', text: 'Remove redundant phrases like "image of".' });
+            } else {
+                feedback.push({ type: 'success', text: 'Good! No redundant phrases detected.' });
+            }
+
+            // Check for key concepts
+            const idealWords = idealAlt.toLowerCase().split(/\W+/).filter(w => w.length > 3);
+            const userWords = userAlt.toLowerCase().split(/\W+/);
+            const matchedConcepts = idealWords.filter(word => userWords.includes(word));
+            const conceptScore = (matchedConcepts.length / idealWords.length) * 30;
+            totalScore += conceptScore - 15;
+
+            if (conceptScore > 20) {
+                feedback.push({ type: 'success', text: 'Captured key concepts well!' });
+            } else if (conceptScore > 10) {
+                feedback.push({ type: 'warning', text: 'Good start, but missing some key details.' });
+            } else {
+                feedback.push({ type: 'error', text: 'Missing important details from the image.' });
+            }
+
+            // Punctuation check
+            if (userAlt.match(/[.!]$/)) {
+                feedback.push({ type: 'success', text: 'Proper punctuation used.' });
+            } else {
+                totalScore -= 5;
+                feedback.push({ type: 'warning', text: 'Consider ending with punctuation.' });
+            }
+
+            // Capitalization
+            if (userAlt[0] === userAlt[0].toUpperCase()) {
+                feedback.push({ type: 'success', text: 'Correct capitalization.' });
+            } else {
+                totalScore -= 5;
+                feedback.push({ type: 'warning', text: 'Start with a capital letter.' });
+            }
+
+            // Specificity check
+            const specificWords = ['showing', 'displaying', 'featuring', 'depicting', 'with', 'including'];
+            const hasSpecificity = specificWords.some(word => userAlt.toLowerCase().includes(word));
+            if (hasSpecificity) {
+                feedback.push({ type: 'success', text: 'Good use of specific descriptive language.' });
+            }
+
+            // Numbers and data (for charts/graphs)
+            if (idealAlt.match(/\d+/) && !userAlt.match(/\d+/)) {
+                totalScore -= 10;
+                feedback.push({ type: 'warning', text: 'Include specific numbers when present.' });
+            }
+
+            totalScore = Math.max(0, Math.min(100, totalScore));
+
+            return { totalScore: Math.round(totalScore), feedback };
+        }
+
+        function displayTrainingResults(result, idealAlt) {
+            const resultsDiv = document.getElementById('trainingResults');
+            const scoreEl = document.getElementById('trainingScore');
+            const barEl = document.getElementById('trainingScoreBar');
+            const gradeEl = document.getElementById('trainingGrade');
+            const suggestedEl = document.getElementById('suggestedAlt');
+            const feedbackList = document.getElementById('trainingFeedbackList');
+
+            resultsDiv.classList.remove('hidden');
+
+            // Score display
+            scoreEl.textContent = result.totalScore + '%';
+            barEl.style.width = result.totalScore + '%';
+
+            // Grade and styling
+            let grade, gradeClass;
+            if (result.totalScore >= 90) {
+                grade = '🏆 Excellent! Professional quality.';
+                gradeClass = 'score-excellent';
+            } else if (result.totalScore >= 75) {
+                grade = '✅ Good work! Minor improvements possible.';
+                gradeClass = 'score-good';
+            } else if (result.totalScore >= 60) {
+                grade = '⚠️ Fair. Keep practicing!';
+                gradeClass = 'score-fair';
+            } else {
+                grade = '❌ Needs improvement. Review the tips.';
+                gradeClass = 'score-poor';
+            }
+
+            gradeEl.textContent = grade;
+            scoreEl.className = 'text-2xl font-bold ' + gradeClass;
+            gradeEl.className = 'text-lg font-semibold ' + gradeClass;
+
+            // Suggested alt text
+            suggestedEl.textContent = idealAlt;
+
+            // Feedback
+            feedbackList.innerHTML = result.feedback.map(item => `
+                <div class="feedback-item feedback-${item.type}">
+                    ${item.text}
+                </div>
+            `).join('');
+
+            // Smooth scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Analytics Section
+        function saveToHistory(entry) {
+            state.history.unshift(entry);
+            if (state.history.length > 50) {
+                state.history = state.history.slice(0, 50);
+            }
+            localStorage.setItem('altTextHistory', JSON.stringify(state.history));
+        }
+
+        function updateAnalytics() {
+            const generations = state.history.filter(h => h.type === 'generation');
+            const trainings = state.history.filter(h => h.type === 'training');
+            
+            document.getElementById('totalImages').textContent = generations.length;
+            document.getElementById('totalExercises').textContent = trainings.length;
+            
+            const avgScore = state.history.length > 0
+                ? Math.round(state.history.reduce((sum, h) => sum + (h.score || 0), 0) / state.history.length)
+                : 0;
+            document.getElementById('avgScore').textContent = avgScore + '%';
+
+            const historyList = document.getElementById('historyList');
+            const noHistory = document.getElementById('noHistory');
+
+            if (state.history.length === 0) {
+                historyList.classList.add('hidden');
+                noHistory.classList.remove('hidden');
+            } else {
+                historyList.classList.remove('hidden');
+                noHistory.classList.add('hidden');
+
+                historyList.innerHTML = state.history.slice(0, 20).map((entry, index) => {
+                    const date = new Date(entry.timestamp);
+                    const timeStr = date.toLocaleString();
+                    const isGeneration = entry.type === 'generation';
+                    
+                    return `
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-2xl">${isGeneration ? '🖼️' : '🎓'}</span>
+                                    <span class="font-semibold text-gray-800">
+                                        ${isGeneration ? 'Generated' : 'Training Exercise'}
+                                    </span>
+                                </div>
+                                <span class="text-sm text-gray-500">${timeStr}</span>
+                            </div>
+                            <div class="bg-gray-50 rounded p-3 mb-2">
+                                <p class="text-sm text-gray-700">${isGeneration ? entry.altText : entry.userAlt}</p>
+                            </div>
+                            ${!isGeneration ? `
+                                <div class="text-xs text-gray-600 mb-2">
+                                    <strong>Suggested:</strong> ${entry.idealAlt}
+                                </div>
+                            ` : ''}
+                            <div class="flex items-center gap-4">
+                                <div class="flex-1 bg-gray-200 rounded-full h-2">
+                                    <div class="h-2 rounded-full gradient-bg" style="width: ${entry.score}%"></div>
+                                </div>
+                                <span class="font-semibold ${
+                                    entry.score >= 90 ? 'score-excellent' :
+                                    entry.score >= 75 ? 'score-good' :
+                                    entry.score >= 60 ? 'score-fair' : 'score-poor'
+                                }">${entry.score}%</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear all history? This cannot be undone.')) {
+                state.history = [];
+                localStorage.removeItem('altTextHistory');
+                updateAnalytics();
+                showNotification('History cleared successfully!');
+            }
+        });
+
+        // Initialize
+        loadTrainingExample();
+        updateAnalytics();
+        generateBtn.disabled = true;
+    </script>
+</body>
+</html>
