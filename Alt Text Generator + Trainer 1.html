@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alt Text Generator & Accessibility Trainer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 40px;
+        }
+
+        .section {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .section h2 {
+            color: #0078d4;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            width: 30px;
+            height: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #0078d4;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #106ebe;
+            background: #f0f8ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            background: #e6f3ff;
+            border-color: #106ebe;
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .button {
+            background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,120,212,0.3);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,120,212,0.4);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-secondary {
+            background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #0078d4;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #0078d4;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .feedback {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #0078d4;
+        }
+
+        .feedback.excellent {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .feedback.good {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .feedback.needs-improvement {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .feedback h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.2em;
+            margin: 10px 0;
+        }
+
+        .score-excellent {
+            background: #10b981;
+            color: white;
+        }
+
+        .score-good {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .score-needs-improvement {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .practice-examples {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .example-item {
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #0078d4;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .example-item strong {
+            color: #0078d4;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: #0078d4;
+            color: white;
+            border-color: #0078d4;
+        }
+
+        .tab:hover:not(.active) {
+            border-color: #0078d4;
+            background: #f0f8ff;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0078d4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .tips-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .tips-panel h3 {
+            margin-bottom: 15px;
+        }
+
+        .tips-panel ul {
+            list-style-position: inside;
+            line-height: 1.8;
+        }
+
+        .history-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #0078d4;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .copy-btn {
+            background: #10b981;
+            padding: 8px 16px;
+            margin-top: 10px;
+        }
+
+        .export-btn {
+            background: #8b5cf6;
+            padding: 8px 16px;
+            margin-left: 10px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .accessibility-check {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 0;
+            gap: 10px;
+        }
+
+        .check-pass {
+            color: #10b981;
+        }
+
+        .check-fail {
+            color: #ef4444;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #0078d4);
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Alt Text Generator & Accessibility Trainer</h1>
+            <p>Enterprise-grade tool for creating accessible image descriptions and improving your alt text writing skills</p>
+        </div>
+
+        <div class="main-content">
+            <!-- Generator Section -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z"/>
+                    </svg>
+                    Image Alt Text Generator
+                </h2>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('upload')">Upload Image</div>
+                    <div class="tab" onclick="switchTab('url')">Image URL</div>
+                </div>
+
+                <div id="uploadTab">
+                    <div class="upload-area" id="uploadArea">
+                        <svg width="60" height="60" fill="#0078d4" viewBox="0 0 20 20" style="margin-bottom: 15px;">
+                            <path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.413l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13H5.5z"/>
+                        </svg>
+                        <h3>Drop your image here or click to browse</h3>
+                        <p style="margin-top: 10px; color: #666;">Supports JPG, PNG, GIF, WebP</p>
+                        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                    </div>
+
+                    <img id="imagePreview" class="image-preview" alt="Uploaded image preview">
+
+                    <div id="urlInput" style="display: none;">
+                        <input type="text" id="imageUrl" placeholder="Enter image URL..." style="width: 100%; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; margin-bottom: 10px;">
+                        <button class="button" onclick="loadImageFromUrl()">Load Image</button>
+                    </div>
+
+                    <button class="button" id="generateBtn" onclick="generateAltText()" style="width: 100%; margin-top: 10px;" disabled>
+                        🤖 Generate Alt Text with AI
+                    </button>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p style="margin-top: 15px;">Analyzing image...</p>
+                    </div>
+
+                    <div id="generatedResult" style="display: none; margin-top: 20px;">
+                        <h3 style="color: #0078d4; margin-bottom: 10px;">Generated Alt Text:</h3>
+                        <textarea id="generatedAlt" rows="4" placeholder="Generated description will appear here..."></textarea>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value" id="charCount">0</div>
+                                <div class="stat-label">Characters</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="wordCount">0</div>
+                                <div class="stat-label">Words</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" id="readTime">0s</div>
+                                <div class="stat-label">Read Time</div>
+                            </div>
+                        </div>
+
+                        <div class="accessibility-check" id="accessibilityCheck"></div>
+
+                        <button class="button copy-btn" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                        <button class="button export-btn" onclick="exportData()">💾 Export Report</button>
+                    </div>
+                </div>
+
+                <div class="tips-panel">
+                    <h3>✨ Best Practices for Alt Text</h3>
+                    <ul>
+                        <li>Be specific and concise (aim for 125 characters or less)</li>
+                        <li>Describe the purpose, not just what you see</li>
+                        <li>Avoid "image of" or "picture of"</li>
+                        <li>Include text that appears in the image</li>
+                        <li>Consider context and user intent</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Training Section -->
+            <div class="section">
+                <h2>
+                    <svg class="icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.714a1 1 0 11.788 1.838L7.667 9.088l1.94.831a1 1 0 00.787 0l7-3a1 1 0 000-1.838l-7-3zM3.31 9.397L5 10.12v4.102a8.969 8.969 0 00-1.05-.174 1 1 0 01-.89-.89 11.115 11.115 0 01.25-3.762zM9.3 16.573A9.026 9.026 0 007 14.935v-3.957l1.818.78a3 3 0 002.364 0l5.508-2.361a11.026 11.026 0 01.25 3.762 1 1 0 01-.89.89 8.968 8.968 0 00-5.35 2.524 1 1 0 01-1.4 0zM6 18a1 1 0 001-1v-2.065a8.935 8.935 0 00-2-.712V17a1 1 0 001 1z"/>
+                    </svg>
+                    Practice & Training Mode
+                </h2>
+
+                <div class="practice-examples">
+                    <h3 style="margin-bottom: 15px;">📚 Practice Scenario</h3>
+                    <p style="margin-bottom: 15px; line-height: 1.6;">Write an alt text for this scenario:</p>
+                    <div class="example-item" id="practiceScenario">
+                        A business professional giving a presentation to a group of colleagues in a modern conference room
+                    </div>
+                    <button class="button button-secondary" onclick="generateNewScenario()" style="margin: 10px 0;">🔄 New Scenario</button>
+                </div>
+
+                <textarea id="practiceInput" rows="4" placeholder="Write your alt text here..."></textarea>
+                
+                <div style="margin: 15px 0;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                    </div>
+                    <p style="text-align: center; color: #666; font-size: 0.9em;">Character count: <span id="practiceCharCount">0</span>/125 (optimal)</p>
+                </div>
+
+                <button class="button button-secondary" onclick="evaluatePractice()" style="width: 100%;">
+                    ⭐ Evaluate My Alt Text
+                </button>
+
+                <div id="evaluationResult"></div>
+
+                <div class="practice-examples" style="margin-top: 20px;">
+                    <h3 style="margin-bottom: 15px;">💡 Example Gallery</h3>
+                    <div class="example-item">
+                        <strong>Decorative:</strong> Leave alt attribute empty (alt="") for purely decorative images
+                    </div>
+                    <div class="example-item">
+                        <strong>Informative:</strong> "Bar chart showing 40% increase in sales from Q1 to Q2"
+                    </div>
+                    <div class="example-item">
+                        <strong>Functional:</strong> "Search button" or "Close menu"
+                    </div>
+                    <div class="example-item">
+                        <strong>Complex:</strong> "Organizational chart with CEO at top, three VPs below, and department managers at bottom level"
+                    </div>
+                </div>
+
+                <div id="historySection" style="margin-top: 20px;">
+                    <h3 style="color: #0078d4; margin-bottom: 15px;">📊 Your Training History</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalPractices">0</div>
+                            <div class="stat-label">Practices</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="avgScore">0</div>
+                            <div class="stat-label">Avg Score</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="excellentCount">0</div>
+                            <div class="stat-label">Excellent</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let practiceHistory = [];
+        
+        const scenarios = [
+            "A business professional giving a presentation to a group of colleagues in a modern conference room",
+            "A laptop displaying code on a dark theme editor with a coffee cup beside it",
+            "A team of diverse employees collaborating around a whiteboard with sticky notes",
+            "A smartphone showing a mobile app dashboard with colorful graphs and metrics",
+            "A modern office space with glass walls, standing desks, and plants",
+            "A person working remotely from a home office with dual monitors",
+            "A customer service representative wearing a headset and smiling at their computer",
+            "A data center with rows of server racks and LED status lights",
+            "A video conference call with multiple participants in a grid layout",
+            "A sign language interpreter providing accessibility services during a meeting"
+        ];
+
+        // File upload handling
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const generateBtn = document.getElementById('generateBtn');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageFile(file);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageFile(file);
+            }
+        });
+
+        function handleImageFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                imagePreview.src = currentImage;
+                imagePreview.style.display = 'block';
+                generateBtn.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const uploadTab = document.getElementById('uploadTab');
+            const urlInput = document.getElementById('urlInput');
+            const uploadArea = document.getElementById('uploadArea');
+
+            if (tab === 'upload') {
+                uploadArea.style.display = 'block';
+                urlInput.style.display = 'none';
+            } else {
+                uploadArea.style.display = 'none';
+                urlInput.style.display = 'block';
+            }
+        }
+
+        function loadImageFromUrl() {
+            const url = document.getElementById('imageUrl').value;
+            if (url) {
+                currentImage = url;
+                imagePreview.src = url;
+                imagePreview.style.display = 'block';
+                generateBtn.disabled = false;
+            }
+        }
+
+        function generateAltText() {
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('generatedResult');
+            const textarea = document.getElementById('generatedAlt');
+
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            // Simulate AI analysis with realistic descriptions
+            setTimeout(() => {
+                const descriptions = [
+                    "Professional presenting quarterly results on a large screen to attentive team members in a well-lit conference room",
+                    "Modern workspace featuring a laptop with multiple code windows open, ergonomic keyboard, and warm beverage",
+                    "Diverse team members collaborating at a glass whiteboard covered with colorful sticky notes and diagrams",
+                    "Dashboard interface displaying real-time analytics with line graphs trending upward and key performance indicators",
+                    "Contemporary open office with collaborative spaces, natural lighting, indoor plants, and height-adjustable workstations"
+                ];
+                
+                const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
+                textarea.value = randomDesc;
+                
+                updateStats(randomDesc);
+                runAccessibilityCheck(randomDesc);
+                
+                loading.style.display = 'none';
+                result.style.display = 'block';
+            }, 2000);
+        }
+
+        function updateStats(text) {
+            const chars = text.length;
+            const words = text.trim().split(/\s+/).length;
+            const readTime = Math.ceil(words / 3); // Average reading speed
+
+            document.getElementById('charCount').textContent = chars;
+            document.getElementById('wordCount').textContent = words;
+            document.getElementById('readTime').textContent = readTime + 's';
+        }
+
+        function runAccessibilityCheck(text) {
+            const checks = [];
+            const chars = text.length;
+
+            checks.push({
+                pass: chars <= 125,
+                text: chars <= 125 ? '✓ Optimal length (125 characters or less)' : '✗ Consider shortening (currently ' + chars + ' characters)'
+            });
+
+            checks.push({
+                pass: !text.toLowerCase().includes('image of') && !text.toLowerCase().includes('picture of'),
+                text: !text.toLowerCase().includes('image of') && !text.toLowerCase().includes('picture of') 
+                    ? '✓ Avoids redundant phrases' 
+                    : '✗ Remove "image of" or "picture of"'
+            });
+
+            checks.push({
+                pass: text.trim().split(/\s+/).length >= 5,
+                text: text.trim().split(/\s+/).length >= 5 
+                    ? '✓ Sufficiently descriptive' 
+                    : '✗ Add more detail'
+            });
+
+            checks.push({
+                pass: /[A-Z]/.test(text[0]),
+                text: /[A-Z]/.test(text[0]) 
+                    ? '✓ Proper capitalization' 
+                    : '✗ Start with capital letter'
+            });
+
+            const checkHtml = checks.map(check => 
+                `<div class="check-item ${check.pass ? 'check-pass' : 'check-fail'}">${check.text}</div>`
+            ).join('');
+
+            document.getElementById('accessibilityCheck').innerHTML = checkHtml;
+        }
+
+        function copyToClipboard() {
+            const text = document.getElementById('generatedAlt').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            });
+        }
+
+        function exportData() {
+            const text = document.getElementById('generatedAlt').value;
+            const data = {
+                altText: text,
+                characters: text.length,
+                words: text.trim().split(/\s+/).length,
+                timestamp: new Date().toISOString(),
+                imageSrc: currentImage
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'alt-text-report-' + Date.now() + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Practice mode functions
+        const practiceInput = document.getElementById('practiceInput');
+        
+        practiceInput.addEventListener('input', () => {
+            const text = practiceInput.value;
+            const charCount = text.length;
+            document.getElementById('practiceCharCount').textContent = charCount;
+            
+            const progress = Math.min((charCount / 125) * 100, 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+        });
+
+        function generateNewScenario() {
+            const scenario = scenarios[Math.floor(Math.random() * scenarios.length)];
+            document.getElementById('practiceScenario').textContent = scenario;
+            practiceInput.value = '';
+            document.getElementById('practiceCharCount').textContent = '0';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('evaluationResult').innerHTML = '';
+        }
+
+        function evaluatePractice() {
+            const text = practiceInput.value.trim();
+            if (!text) {
+                alert('Please write an alt text description first!');
+                return;
+            }
+
+            const score = calculateScore(text);
+            const rating = getRating(score);
+            
+            practiceHistory.push({
+                text: text,
+                score: score,
+                rating: rating,
+                timestamp: new Date().toISOString()
+            });
+
+            updatePracticeStats();
+            displayEvaluation(score, rating, text);
+        }
+
+        function calculateScore(text) {
+            let score = 0;
+            const chars = text.length;
+            const words = text.trim().split(/\s+/).length;
+
+            // Length scoring (0-30 points)
+            if (chars >= 50 && chars <= 125) score += 30;
+            else if (chars >= 30 && chars < 50) score += 20;
+            else if (chars > 125 && chars <= 150) score += 20;
+            else score += 10;
+
+            // Descriptiveness (0-25 points)
+            if (words >= 8 && words <= 20) score += 25;
+            else if (words >= 5 && words < 8) score += 15;
+            else score += 10;
+
+            // Best practices (0-45 points)
+            if (!text.toLowerCase().includes('image of') && !text.toLowerCase().includes('picture of')) {
+                score += 15;
+            }
+
+            if (/[A-Z]/.test(text[0])) {
+                score += 10;
+            }
+
+            if (!text.endsWith('.')) {
+                score += 10;
+            }
+
+            // Context and specificity
+            const hasAdjectives = /\b(modern|professional|colorful|diverse|contemporary|innovative)\b/i.test(text);
+            const hasActions = /\b(presenting|displaying|showing|collaborating|working|demonstrating)\b/i.test(text);
+            
+            if (hasAdjectives) score += 5;
+            if (hasActions) score += 5;
+
+            return Math.min(score, 100);
+        }
+
+        function getRating(score) {
+            if (score >= 85) return 'excellent';
+            if (score >= 70) return 'good';
+            return 'needs-improvement';
+        }
+
+        function displayEvaluation(score, rating, text) {
+            const resultDiv = document.getElementById('evaluationResult');
+            
+            let feedbackClass = rating;
+            let badgeClass = 'score-' + rating;
+            let title = rating === 'excellent' ? 'Excellent Work!' : 
+                       rating === 'good' ? 'Good Job!' : 'Keep Practicing!';
+            
+            let feedback = generateDetailedFeedback(text, score);
+            
+            const html = `
+                <div class="feedback ${feedbackClass}">
+                    <h3>${title}</h3>
+                    <div class="score-badge ${badgeClass}">Score: ${score}/100</div>
+                    <div style="margin-top: 15px;">
+                        <strong>Strengths:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            ${feedback.strengths.map(s => '<li>' + s + '</li>').join('')}
+                        </ul>
+                        ${feedback.improvements.length > 0 ? `
+                        <strong>Areas for Improvement:</strong>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            ${feedback.improvements.map(i => '<li>' + i + '</li>').join('')}
+                        </ul>
+                        ` : ''}
+                        <p style="margin-top: 15px; font-style: italic;">${feedback.tip}</p>
+                    </div>
+                </div>
+            `;
+            
+            resultDiv.innerHTML = html;
+        }
+
+        function generateDetailedFeedback(text, score) {
+            const chars = text.length;
+            const words = text.trim().split(/\s+/).length;
+            const strengths = [];
+            const improvements = [];
+            let tip = '';
+
+            // Analyze strengths
+            if (chars >= 50 && chars <= 125) {
+                strengths.push('Perfect length for screen reader users');
+            }
+            
+            if (!text.toLowerCase().includes('image of') && !text.toLowerCase().includes('picture of')) {
+                strengths.push('Avoids redundant phrases like "image of"');
+            }
+            
+            if (words >= 8) {
+                strengths.push('Provides sufficient descriptive detail');
+            }
+            
+            if (/[A-Z]/.test(text[0])) {
+                strengths.push('Proper capitalization');
+            }
+
+            const hasSpecificDetails = /\b(modern|professional|colorful|diverse|contemporary|quarterly|real-time|collaborative)\b/i.test(text);
+            if (hasSpecificDetails) {
+                strengths.push('Includes specific, meaningful details');
+            }
+
+            // Analyze improvements
+            if (chars < 50) {
+                improvements.push('Add more descriptive detail (currently ' + chars + ' characters)');
+            } else if (chars > 125) {
+                improvements.push('Consider condensing to 125 characters or less for optimal screen reader experience');
+            }
+
+            if (words < 8) {
+                improvements.push('Expand description to include more context');
+            }
+
+            if (text.toLowerCase().includes('image of') || text.toLowerCase().includes('picture of')) {
+                improvements.push('Remove "image of" or "picture of" - users already know it\'s an image');
+            }
+
+            if (text.endsWith('.')) {
+                improvements.push('Alt text typically doesn\'t need ending punctuation');
+            }
+
+            // Generate contextual tip
+            if (score >= 85) {
+                tip = '🎉 Outstanding! You\'re writing accessible alt text at a professional level. Your descriptions are clear, concise, and user-focused.';
+            } else if (score >= 70) {
+                tip = '👍 Great work! With a few small refinements, your alt text will be even more effective for users relying on screen readers.';
+            } else {
+                tip = '💡 Keep practicing! Focus on being specific and concise. Think about what information is most important for someone who can\'t see the image.';
+            }
+
+            return { strengths, improvements, tip };
+        }
+
+        function updatePracticeStats() {
+            const total = practiceHistory.length;
+            const avgScore = total > 0 ? 
+                Math.round(practiceHistory.reduce((sum, p) => sum + p.score, 0) / total) : 0;
+            const excellent = practiceHistory.filter(p => p.rating === 'excellent').length;
+
+            document.getElementById('totalPractices').textContent = total;
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('excellentCount').textContent = excellent;
+        }
+
+        // Initialize with random scenario
+        generateNewScenario();
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                if (document.activeElement === practiceInput) {
+                    evaluatePractice();
+                }
+            }
+        });
+
+        // Auto-save practice history to memory
+        setInterval(() => {
+            if (practiceHistory.length > 0) {
+                // Store in memory for session
+                window.practiceData = practiceHistory;
+            }
+        }, 30000);
+
+        // Add live character counter for generated alt text
+        document.getElementById('generatedAlt').addEventListener('input', (e) => {
+            updateStats(e.target.value);
+            if (e.target.value) {
+                runAccessibilityCheck(e.target.value);
+            }
+        });
+    </script>
+</body>
+</html>
