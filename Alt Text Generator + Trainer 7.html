@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alt Text Generator & Trainer Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientFlow 15s ease infinite;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -50%;
+            left: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: floatReverse 25s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-30px, 30px) rotate(8deg); }
+        }
+
+        @keyframes floatReverse {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(40px, -20px) rotate(-5deg); }
+        }
+
+        .max-w-7xl {
+            position: relative;
+            z-index: 1;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.25), 
+                        0 2px 8px 0 rgba(31, 38, 135, 0.15),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.5), rgba(255,255,255,0.1));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 16px 56px 0 rgba(31, 38, 135, 0.3),
+                        0 4px 16px 0 rgba(31, 38, 135, 0.2),
+                        inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+            transform: translateY(-2px);
+        }
+
+        .feature-card {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .feature-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover::after {
+            opacity: 1;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25),
+                        0 12px 24px rgba(102, 126, 234, 0.2);
+        }
+
+        .score-excellent { 
+            color: #10b981; 
+            text-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        .score-good { 
+            color: #3b82f6;
+            text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        .score-fair { 
+            color: #f59e0b;
+            text-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+        .score-needs-work { 
+            color: #ef4444;
+            text-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.1) 100%);
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.05) 0%, transparent 50%);
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        .upload-zone::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.2) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: width 0.7s ease, height 0.7s ease;
+        }
+
+        .upload-zone:hover::before {
+            opacity: 1;
+        }
+
+        .upload-zone:hover::after {
+            width: 150%;
+            height: 150%;
+        }
+
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.12);
+            transform: scale(1.02);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.25),
+                        inset 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .upload-zone.dragging {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.2);
+            transform: scale(1.04);
+            box-shadow: 0 16px 48px rgba(102, 126, 234, 0.35),
+                        inset 0 4px 16px rgba(102, 126, 234, 0.15);
+            border-style: solid;
+            border-width: 4px;
+            animation: dragPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes dragPulse {
+            0%, 100% { 
+                box-shadow: 0 16px 48px rgba(102, 126, 234, 0.35),
+                           inset 0 4px 16px rgba(102, 126, 234, 0.15);
+            }
+            50% { 
+                box-shadow: 0 20px 60px rgba(102, 126, 234, 0.45),
+                           inset 0 6px 20px rgba(102, 126, 234, 0.25);
+            }
+        }
+
+        .tab-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: translateX(-50%);
+            transition: width 0.3s ease;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        .tab-btn.active::before {
+            width: 100%;
+        }
+
+        .progress-bar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .badge {
+            animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInScale {
+            from { 
+                opacity: 0; 
+                transform: scale(0.8) translateY(-10px);
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border: 2px solid rgba(102, 126, 234, 0.25);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            transform: scale(0.8);
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-6px) scale(1.03);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.3),
+                        0 6px 16px rgba(118, 75, 162, 0.2);
+            border-color: rgba(102, 126, 234, 0.5);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+        .stat-card > div:first-child {
+            position: relative;
+            z-index: 1;
+        }
+
+        .practice-image {
+            max-height: 400px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .practice-image:hover {
+            transform: scale(1.02);
+        }
+
+        textarea {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            resize: vertical;
+            border-radius: 12px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 5px rgba(102, 126, 234, 0.15),
+                        0 6px 16px rgba(102, 126, 234, 0.25),
+                        inset 0 2px 4px rgba(102, 126, 234, 0.05);
+            transform: translateY(-3px) scale(1.01);
+        }
+
+        textarea:hover {
+            border-color: #9ca3af;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .guideline-item {
+            padding-left: 1.5rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .guideline-item::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .guideline-item:hover {
+            padding-left: 1.7rem;
+            color: #667eea;
+        }
+
+        button {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        button:hover::after {
+            opacity: 1;
+        }
+
+        button:active::before {
+            width: 400px;
+            height: 400px;
+        }
+
+        button:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25),
+                        0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        button:active {
+            transform: translateY(-1px) scale(0.98);
+        }
+
+        .bg-gradient-to-r {
+            background-size: 200% 100%;
+            animation: gradientShift 4s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        h1 {
+            animation: titleFloat 4s ease-in-out infinite;
+            text-shadow: 0 4px 16px rgba(0, 0, 0, 0.3),
+                         0 2px 8px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.01); }
+        }
+
+        .history-item {
+            animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .history-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            border-radius: 0 4px 4px 0;
+            transform: scaleY(0);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .history-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .history-item:hover {
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        #image-preview img {
+            animation: zoomIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .insight-badge {
+            position: relative;
+            display: inline-block;
+        }
+
+        .insight-badge::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+
+        .insight-badge:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .score-ring {
+            animation: pulseRing 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        ::selection {
+            background: rgba(102, 126, 234, 0.4);
+            color: #1f2937;
+            text-shadow: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Enhanced loading animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.98); }
+        }
+
+        /* Sparkle effect */
+        .sparkle {
+            position: relative;
+        }
+
+        .sparkle::after {
+            content: '✨';
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            font-size: 20px;
+            animation: sparkleFloat 2s ease-in-out infinite;
+            opacity: 0;
+        }
+
+        .sparkle:hover::after {
+            animation: sparkleFloat 2s ease-in-out infinite, fadeInOut 2s ease-in-out infinite;
+        }
+
+        @keyframes sparkleFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(180deg); }
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        /* Glow effect for scores */
+        .glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 5px currentColor);
+            }
+            50% { 
+                filter: drop-shadow(0 0 15px currentColor) drop-shadow(0 0 25px currentColor);
+            }
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8 relative">
+            <h1 class="text-5xl font-bold text-white mb-2 tracking-tight">Alt Text Generator & Trainer Pro</h1>
+            <p class="text-white text-lg opacity-90 font-medium">Master the art of accessible image descriptions with AI-powered assistance</p>
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="glass-card rounded-t-2xl p-1 mb-0">
+            <div class="flex gap-2">
+                <button class="tab-btn active flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('generator')">
+                    <i class="fas fa-robot mr-2"></i> AI Generator
+                </button>
+                <button class="tab-btn flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('trainer')">
+                    <i class="fas fa-graduation-cap mr-2"></i> Trainer
+                </button>
+                <button class="tab-btn flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('guidelines')">
+                    <i class="fas fa-book mr-2"></i> Guidelines
+                </button>
+                <button class="tab-btn flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('history')">
+                    <i class="fas fa-chart-line mr-2"></i> Analytics
+                </button>
+            </div>
+        </div>
+
+        <!-- Generator Tab -->
+        <div id="generator-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: Upload & Preview -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload Image</h2>
+                    
+                    <div class="upload-zone rounded-xl p-8 text-center mb-6" id="upload-zone">
+                        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-lg font-semibold text-gray-700 mb-2">Drag & drop your image here</p>
+                        <p class="text-sm text-gray-500 mb-4">or</p>
+                        <button onclick="document.getElementById('file-input').click()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                            <i class="fas fa-folder-open mr-2"></i> Browse Files
+                        </button>
+                        <p class="text-xs text-gray-400 mt-4">Supports JPG, PNG, WebP up to 10MB</p>
+                    </div>
+
+                    <div id="image-preview" class="hidden">
+                        <div class="relative">
+                            <img id="preview-img" class="w-full rounded-xl shadow-lg mb-4" alt="Preview">
+                            <div id="image-overlay" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-xl hidden">
+                                <div class="text-white text-center">
+                                    <i class="fas fa-spinner fa-spin text-4xl mb-2"></i>
+                                    <p>Analyzing image...</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="analyzeImage()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                                <i class="fas fa-magic mr-2"></i> Generate Alt Text
+                            </button>
+                            <button onclick="clearImage()" class="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-red-500 hover:text-red-500 transition-all">
+                                <i class="fas fa-times mr-2"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Generated Alt Text -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Generated Alt Text</h2>
+                    
+                    <div id="alt-text-results" class="hidden">
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="font-semibold text-gray-700">AI-Generated Description</label>
+                                <span class="text-sm text-gray-500" id="char-count">0 characters</span>
+                            </div>
+                            <textarea id="generated-alt" class="w-full p-4 border-2 border-gray-300 rounded-lg resize-none transition-all" rows="6" placeholder="Alt text will appear here..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="stat-card p-4 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">Clarity Score</div>
+                                <div class="text-2xl font-bold text-purple-600" id="clarity-score">-</div>
+                            </div>
+                            <div class="stat-card p-4 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">Length</div>
+                                <div class="text-2xl font-bold text-purple-600" id="length-status">-</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-4">
+                            <h3 class="font-semibold text-blue-900 mb-2"><i class="fas fa-lightbulb mr-2"></i> AI Insights</h3>
+                            <ul id="insights-list" class="text-sm text-blue-800 space-y-1">
+                            </ul>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="copyAltText()" class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-all">
+                                <i class="fas fa-copy mr-2"></i> Copy Alt Text
+                            </button>
+                            <button onclick="saveToHistory()" class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-all">
+                                <i class="fas fa-save mr-2"></i> Save
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="empty-state" class="text-center py-12">
+                        <i class="fas fa-file-alt text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-400 text-lg">Upload an image to generate alt text</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainer Tab -->
+        <div id="trainer-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Practice Writing Alt Descriptions</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <div class="mb-4 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-700">Practice Image</h3>
+                        <div class="flex gap-2">
+                            <button onclick="loadNewPracticeImage()" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-all">
+                                <i class="fas fa-random mr-2"></i> New Image
+                            </button>
+                            <button id="hint-btn" onclick="toggleHint()" class="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all">
+                                <i class="fas fa-lightbulb mr-2"></i> Hint
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-100 rounded-xl p-4 mb-4 flex items-center justify-center" style="min-height: 400px;">
+                        <img id="practice-img" class="practice-image rounded-lg shadow-lg" alt="Practice image">
+                    </div>
+
+                    <div id="hint-container" class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg hidden">
+                        <h4 class="font-semibold text-yellow-900 mb-2"><i class="fas fa-lightbulb mr-2"></i> Hint</h4>
+                        <p id="image-hint" class="text-sm text-yellow-800">This image appears on an e-commerce product page.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Your Alt Text</h3>
+                    
+                    <textarea id="practice-alt" class="w-full p-4 border-2 border-gray-300 rounded-lg resize-none mb-4 transition-all" rows="8" placeholder="Write your alt text description here..."></textarea>
+
+                    <button onclick="evaluatePractice()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:shadow-lg transition-all mb-6">
+                        <i class="fas fa-chart-bar mr-2"></i> Evaluate My Description
+                    </button>
+
+                    <div id="evaluation-results" class="hidden">
+                        <div class="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-xl p-6 mb-6">
+                            <div class="text-center mb-4">
+                                <div class="text-sm font-semibold text-gray-600 mb-2">OVERALL SCORE</div>
+                                <div id="overall-score" class="text-6xl font-bold text-purple-700">-</div>
+                                <div id="score-label" class="text-lg font-semibold mt-2">-</div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <div class="text-2xl font-bold" id="desc-score">-</div>
+                                        <div class="text-xs text-gray-600">Descriptive</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold" id="conc-score">-</div>
+                                        <div class="text-xs text-gray-600">Concise</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold" id="ctx-score">-</div>
+                                        <div class="text-xs text-gray-600">Contextual</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-900 mb-2"><i class="fas fa-check-circle mr-2"></i> Strengths</h4>
+                                <ul id="strengths-list" class="text-sm text-green-800 space-y-1 list-disc list-inside">
+                                </ul>
+                            </div>
+
+                            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg">
+                                <h4 class="font-semibold text-orange-900 mb-2"><i class="fas fa-bullseye mr-2"></i> Areas for Improvement</h4>
+                                <ul id="improvements-list" class="text-sm text-orange-800 space-y-1 list-disc list-inside">
+                                </ul>
+                            </div>
+
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                                <h4 class="font-semibold text-blue-900 mb-2"><i class="fas fa-edit mr-2"></i> Suggested Version</h4>
+                                <p id="suggested-alt" class="text-sm text-blue-800 italic"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines Tab -->
+        <div id="guidelines-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8 hidden">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800">Alt Text Best Practices</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="feature-card bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-xl border border-purple-200">
+                    <div class="text-3xl mb-3">🎯</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Be Specific & Accurate</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">Describe what's actually in the image</li>
+                        <li class="guideline-item">Include relevant details about colors, objects, and actions</li>
+                        <li class="guideline-item">Avoid subjective interpretations</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
+                    <div class="text-3xl mb-3">✂️</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Keep It Concise</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">Aim for 125 characters or less</li>
+                        <li class="guideline-item">Focus on the most important elements</li>
+                        <li class="guideline-item">Avoid redundant phrases like "image of" or "picture of"</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                    <div class="text-3xl mb-3">🎨</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Context Matters</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">Consider where the image appears</li>
+                        <li class="guideline-item">Match the description to user needs</li>
+                        <li class="guideline-item">Include information relevant to the content</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl border border-orange-200">
+                    <div class="text-3xl mb-3">⚡</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Functional Images</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">For buttons/links: describe the action</li>
+                        <li class="guideline-item">For icons: explain their purpose</li>
+                        <li class="guideline-item">For decorative images: use empty alt=""</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-gradient-to-r from-purple-100 to-indigo-100 p-6 rounded-xl">
+                <h3 class="text-xl font-bold text-gray-800 mb-4"><i class="fas fa-book-open mr-2"></i> Quick Examples</h3>
+                
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-times-circle text-red-500 text-2xl mt-1"></i>
+                            <div class="flex-1">
+                                <div class="font-semibold text-red-700 mb-1">Poor:</div>
+                                <div class="text-gray-700 italic">"Image of a dog"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-check-circle text-green-500 text-2xl mt-1"></i>
+                            <div class="flex-1">
+                                <div class="font-semibold text-green-700 mb-1">Better:</div>
+                                <div class="text-gray-700 italic">"Golden retriever puppy playing with a red ball on grass"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-times-circle text-red-500 text-2xl mt-1"></i>
+                            <div class="flex-1">
+                                <div class="font-semibold text-red-700 mb-1">Poor:</div>
+                                <div class="text-gray-700 italic">"A very beautiful sunset over the ocean with amazing colors in the sky and waves crashing on the beach"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-check-circle text-green-500 text-2xl mt-1"></i>
+                            <div class="flex-1">
+                                <div class="font-semibold text-green-700 mb-1">Better:</div>
+                                <div class="text-gray-700 italic">"Sunset over ocean with orange and pink sky"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="history-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Your Alt Text Analytics</h2>
+                <button onclick="clearHistory()" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-all">
+                    <i class="fas fa-trash mr-2"></i> Clear History
+                </button>
+            </div>
+
+            <div id="history-stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Total Generated</div>
+                    <div class="text-3xl font-bold text-purple-600" id="total-generated">0</div>
+                </div>
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Avg Score</div>
+                    <div class="text-3xl font-bold text-purple-600" id="avg-score">-</div>
+                </div>
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Practice Sessions</div>
+                    <div class="text-3xl font-bold text-purple-600" id="practice-count">0</div>
+                </div>
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Best Score</div>
+                    <div class="text-3xl font-bold text-purple-600" id="best-score">-</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div class="glass-card p-4 rounded-xl">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Score Progress</h3>
+                    <canvas id="progress-chart" width="400" height="200"></canvas>
+                </div>
+                <div class="glass-card p-4 rounded-xl">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Score Distribution</h3>
+                    <canvas id="distribution-chart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <div id="history-list" class="space-y-4">
+            </div>
+
+            <div id="history-empty" class="text-center py-12">
+                <i class="fas fa-chart-bar text-5xl text-gray-300 mb-4"></i>
+                <p class="text-gray-400 text-lg">No history yet. Start generating alt text!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentImage = null;
+        let history = JSON.parse(localStorage.getItem('altTextHistory')) || [];
+        let practiceScores = JSON.parse(localStorage.getItem('practiceScores')) || [];
+        let currentPracticeIndex = 0;
+        let progressChart, distributionChart;
+
+        // Enhanced practice images with contexts and hints
+        const practiceImages = [
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzg3Q0VFQiIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjEwMCIgcj0iNTAiIGZpbGw9IiNGRkQ3MDAiLz48cGF0aCBkPSJNMCwzMDAgUTMwMCwyMDAgNjAwLDMwMCBMNjAwLDQwMCBMMCw0MDAgWiIgZmlsbD0iIzIyOEIyMiIvPjxyZWN0IHg9IjI1MCIgeT0iMTUwIiB3aWR0aD0iODAiIGhlaWdodD0iMTUwIiBmaWxsPSIjOEI0NTEzIi8+PGNpcmNsZSBjeD0iMjkwIiBjeT0iMTgwIiByPSI4MCIgZmlsbD0iIzIyOEIyMiIvPjwvc3ZnPg==',
+                context: 'This image appears on a children\'s storybook website.',
+                hint: 'Focus on the main elements: sun, tree, and landscape.',
+                ideal: 'Sunny landscape with a yellow sun in blue sky, green hills, and a tree with a round green canopy'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0ZGRkZGRiIvPjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjUwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMzMzMyIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTUwLDIwMCBMNTUwLDIwMCIgc3Ryb2tlPSIjMzMzMzMzIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMzAwLDUwIEwzMDAsMzUwIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjEyNSIgcj0iNDAiIGZpbGw9IiNGRjAwMDAiLz48Y2lyY2xlIGN4PSI0MDAiIGN5PSIyNzUiIHI9IjQwIiBmaWxsPSIjMDBGRjAwIi8+PHRleHQgeD0iMzAwIiB5PSIzOTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzMzMzMzMyI+U2FsZXMgRGF0YTwvdGV4dD48L3N2Zz4=',
+                context: 'This chart appears in a business report for stakeholders.',
+                hint: 'Mention the chart type, key data points, and purpose.',
+                ideal: 'Bar chart titled "Sales Data" showing two data points: one red and one green'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0YwRjBGMCIvPjxyZWN0IHg9IjE1MCIgeT0iMTAwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgcng9IjIwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjRDFENUREIiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSIyMjUiIGN5PSIxNzUiIHI9IjMwIiBmaWxsPSIjNDI4NUY0Ii8+PHRleHQgeD0iMzAwIiB5PSIxODUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzMzMzMzMyI+TG9naW48L3RleHQ+PHJlY3QgeD0iMTgwIiB5PSIyMjAiIHdpZHRoPSIyNDAiIGhlaWdodD0iMzAiIHJ4PSI1IiBmaWxsPSIjRTBFMEUwIi8+PHJlY3QgeD0iMTgwIiB5PSIyNjAiIHdpZHRoPSIyNDAiIGhlaWdodD0iMzAiIHJ4PSI1IiBmaWxsPSIjRTBFMEUwIi8+PC9zdmc+',
+                context: 'This UI mockup appears in design documentation for developers.',
+                hint: 'Describe the UI elements and their purpose.',
+                ideal: 'Login form mockup with blue user icon, username and password fields, and "Login" button'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzJDM0U1MCIvPjxwYXRoIGQ9Ik0xMDAsMzAwIEwyMDAsMjAwIEwzMDAsMjUwIEw0MDAsMTUwIEw1MDAsMjAwIiBmaWxsPSJub25lIiBzdHJva2U9IiMxQUJDOUMiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjMwMCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjIwMCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjI1MCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjE1MCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjUwMCIgY3k9IjIwMCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjx0ZXh0IHg9IjMwMCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNFQ0Y0RjQiPlJldmVudWUgVHJlbmQ8L3RleHQ+PC9zdmc+',
+                context: 'This graph appears in a financial dashboard for investors.',
+                hint: 'Describe the trend and key data points.',
+                ideal: 'Line graph titled "Revenue Trend" showing upward trend with five data points'
+            }
+        ];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDragAndDrop();
+            loadNewPracticeImage();
+            updateHistoryDisplay();
+            updateStats();
+            initializeCharts();
+        });
+
+        // Tab switching function
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.getElementById('generator-tab').classList.add('hidden');
+            document.getElementById('trainer-tab').classList.add('hidden');
+            document.getElementById('guidelines-tab').classList.add('hidden');
+            document.getElementById('history-tab').classList.add('hidden');
+            
+            // Remove active class from all tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab and activate its button
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            // Update charts when switching to analytics tab
+            if (tabName === 'history') {
+                updateCharts();
+            }
+        }
+
+        // Drag and drop setup
+        function setupDragAndDrop() {
+            const uploadZone = document.getElementById('upload-zone');
+            
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragging');
+            });
+            
+            uploadZone.addEventListener('dragleave', function() {
+                uploadZone.classList.remove('dragging');
+            });
+            
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragging');
+                
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect({ target: { files: e.dataTransfer.files } });
+                }
+            });
+        }
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = {
+                    src: e.target.result,
+                    name: file.name,
+                    type: file.type,
+                    size: file.size
+                };
+                
+                document.getElementById('preview-img').src = currentImage.src;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('alt-text-results').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Analyze image and generate alt text
+        function analyzeImage() {
+            if (!currentImage) return;
+            
+            const overlay = document.getElementById('image-overlay');
+            overlay.classList.remove('hidden');
+            
+            // Simulate AI processing with a delay
+            setTimeout(() => {
+                // In a real app, this would call an AI service
+                const altText = generateAltText(currentImage);
+                
+                document.getElementById('generated-alt').value = altText;
+                updateCharCount();
+                
+                // Calculate scores
+                const clarityScore = Math.floor(Math.random() * 41) + 60; // 60-100
+                const lengthStatus = altText.length <= 125 ? 'Good' : 'Long';
+                
+                document.getElementById('clarity-score').textContent = `${clarityScore}%`;
+                document.getElementById('length-status').textContent = lengthStatus;
+                
+                // Add insights
+                const insightsList = document.getElementById('insights-list');
+                insightsList.innerHTML = '';
+                
+                const insights = [
+                    'Good use of descriptive language',
+                    'Appropriate level of detail for this image type',
+                    'Considers the visual hierarchy of elements',
+                    'Could benefit from more specific color references'
+                ];
+                
+                insights.forEach(insight => {
+                    const li = document.createElement('li');
+                    li.textContent = insight;
+                    insightsList.appendChild(li);
+                });
+                
+                document.getElementById('alt-text-results').classList.remove('hidden');
+                overlay.classList.add('hidden');
+            }, 1500);
+        }
+
+        // Generate alt text (simulated AI)
+        function generateAltText(image) {
+            // This is a simplified simulation - a real app would use an AI service
+            const templates = [
+                "A vibrant scene featuring various elements arranged in a visually appealing composition",
+                "Detailed illustration with multiple components creating an engaging visual narrative",
+                "Colorful graphic with balanced elements and harmonious color scheme",
+                "Complex image with layered elements and dynamic composition"
+            ];
+            
+            return templates[Math.floor(Math.random() * templates.length)];
+        }
+
+        // Update character count
+        function updateCharCount() {
+            const textarea = document.getElementById('generated-alt');
+            const charCount = document.getElementById('char-count');
+            charCount.textContent = `${textarea.value.length} characters`;
+        }
+
+        // Copy alt text to clipboard
+        function copyAltText() {
+            const altText = document.getElementById('generated-alt').value;
+            navigator.clipboard.writeText(altText).then(() => {
+                // Show success feedback
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+                button.classList.remove('bg-green-600');
+                button.classList.add('bg-green-500');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('bg-green-500');
+                    button.classList.add('bg-green-600');
+                }, 2000);
+            });
+        }
+
+        // Save to history
+        function saveToHistory() {
+            if (!currentImage) return;
+            
+            const altText = document.getElementById('generated-alt').value;
+            const clarityScore = parseInt(document.getElementById('clarity-score').textContent);
+            
+            const historyItem = {
+                id: Date.now(),
+                image: currentImage.src,
+                altText: altText,
+                clarityScore: clarityScore,
+                timestamp: new Date().toISOString(),
+                type: 'generated'
+            };
+            
+            history.unshift(historyItem);
+            localStorage.setItem('altTextHistory', JSON.stringify(history));
+            
+            updateHistoryDisplay();
+            updateStats();
+            
+            // Show success feedback
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-2"></i> Saved!';
+            button.classList.remove('bg-purple-600');
+            button.classList.add('bg-purple-500');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-purple-500');
+                button.classList.add('bg-purple-600');
+            }, 2000);
+        }
+
+        // Clear current image
+        function clearImage() {
+            currentImage = null;
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+            document.getElementById('alt-text-results').classList.add('hidden');
+            document.getElementById('file-input').value = '';
+        }
+
+        // Load new practice image
+        function loadNewPracticeImage() {
+            currentPracticeIndex = Math.floor(Math.random() * practiceImages.length);
+            const practiceImage = practiceImages[currentPracticeIndex];
+            
+            document.getElementById('practice-img').src = practiceImage.url;
+            document.getElementById('image-hint').textContent = practiceImage.hint;
+            document.getElementById('practice-alt').value = '';
+            document.getElementById('evaluation-results').classList.add('hidden');
+            document.getElementById('hint-container').classList.add('hidden');
+        }
+
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintContainer = document.getElementById('hint-container');
+            hintContainer.classList.toggle('hidden');
+        }
+
+        // Evaluate practice alt text
+        function evaluatePractice() {
+            const userText = document.getElementById('practice-alt').value.trim();
+            if (!userText) {
+                alert('Please write some alt text before evaluating');
+                return;
+            }
+            
+            const practiceImage = practiceImages[currentPracticeIndex];
+            
+            // Calculate scores (simulated evaluation)
+            const descScore = Math.floor(Math.random() * 21) + 70; // 70-90
+            const concScore = Math.floor(Math.random() * 26) + 65; // 65-90
+            const ctxScore = Math.floor(Math.random() * 31) + 60; // 60-90
+            
+            const overallScore = Math.round((descScore + concScore + ctxScore) / 3);
+            
+            // Update scores in UI
+            document.getElementById('desc-score').textContent = `${descScore}%`;
+            document.getElementById('conc-score').textContent = `${concScore}%`;
+            document.getElementById('ctx-score').textContent = `${ctxScore}%`;
+            document.getElementById('overall-score').textContent = `${overallScore}%`;
+            
+            // Set score label and color
+            const scoreLabel = document.getElementById('score-label');
+            if (overallScore >= 85) {
+                scoreLabel.textContent = 'Excellent';
+                scoreLabel.className = 'text-lg font-semibold mt-2 score-excellent';
+            } else if (overallScore >= 70) {
+                scoreLabel.textContent = 'Good';
+                scoreLabel.className = 'text-lg font-semibold mt-2 score-good';
+            } else if (overallScore >= 60) {
+                scoreLabel.textContent = 'Fair';
+                scoreLabel.className = 'text-lg font-semibold mt-2 score-fair';
+            } else {
+                scoreLabel.textContent = 'Needs Work';
+                scoreLabel.className = 'text-lg font-semibold mt-2 score-needs-work';
+            }
+            
+            // Generate feedback
+            const strengthsList = document.getElementById('strengths-list');
+            strengthsList.innerHTML = '';
+            
+            const strengths = [
+                'Good use of descriptive adjectives',
+                'Appropriate level of detail',
+                'Clear and concise phrasing',
+                'Relevant to the image context'
+            ].slice(0, Math.floor(Math.random() * 3) + 1); // 1-3 random strengths
+            
+            strengths.forEach(strength => {
+                const li = document.createElement('li');
+                li.textContent = strength;
+                strengthsList.appendChild(li);
+            });
+            
+            const improvementsList = document.getElementById('improvements-list');
+            improvementsList.innerHTML = '';
+            
+            const improvements = [
+                'Consider adding more specific details about colors',
+                'Try to be more concise - aim for 125 characters or less',
+                'Include the main subject earlier in the description',
+                'Avoid subjective terms like "beautiful" or "amazing"'
+            ].slice(0, Math.floor(Math.random() * 3) + 1); // 1-3 random improvements
+            
+            improvements.forEach(improvement => {
+                const li = document.createElement('li');
+                li.textContent = improvement;
+                improvementsList.appendChild(li);
+            });
+            
+            // Show suggested version
+            document.getElementById('suggested-alt').textContent = practiceImage.ideal;
+            
+            // Show results
+            document.getElementById('evaluation-results').classList.remove('hidden');
+            
+            // Save practice score
+            practiceScores.push({
+                score: overallScore,
+                timestamp: new Date().toISOString(),
+                image: practiceImage.url
+            });
+            localStorage.setItem('practiceScores', JSON.stringify(practiceScores));
+            
+            updateStats();
+        }
+
+        // Update history display
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('history-list');
+            const historyEmpty = document.getElementById('history-empty');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '';
+                historyEmpty.classList.remove('hidden');
+                return;
+            }
+            
+            historyEmpty.classList.add('hidden');
+            historyList.innerHTML = '';
+            
+            history.slice(0, 10).forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item glass-card p-4 rounded-lg border border-gray-200';
+                
+                historyItem.innerHTML = `
+                    <div class="flex gap-4">
+                        <div class="flex-shrink-0">
+                            <img src="${item.image}" class="w-16 h-16 object-cover rounded-lg" alt="History image">
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="font-semibold text-gray-800">${item.altText.substring(0, 60)}${item.altText.length > 60 ? '...' : ''}</div>
+                                <div class="text-sm text-gray-500">${new Date(item.timestamp).toLocaleDateString()}</div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <div class="text-sm text-gray-600">Clarity: <span class="font-semibold">${item.clarityScore}%</span></div>
+                                <button onclick="deleteHistoryItem(${item.id})" class="text-red-500 hover:text-red-700 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        // Delete history item
+        function deleteHistoryItem(id) {
+            history = history.filter(item => item.id !== id);
+            localStorage.setItem('altTextHistory', JSON.stringify(history));
+            updateHistoryDisplay();
+            updateStats();
+        }
+
+        // Clear all history
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all history?')) {
+                history = [];
+                practiceScores = [];
+                localStorage.removeItem('altTextHistory');
+                localStorage.removeItem('practiceScores');
+                updateHistoryDisplay();
+                updateStats();
+                updateCharts();
+            }
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('total-generated').textContent = history.length;
+            document.getElementById('practice-count').textContent = practiceScores.length;
+            
+            if (history.length > 0) {
+                const avgScore = history.reduce((sum, item) => sum + item.clarityScore, 0) / history.length;
+                document.getElementById('avg-score').textContent = `${Math.round(avgScore)}%`;
+            } else {
+                document.getElementById('avg-score').textContent = '-';
+            }
+            
+            if (practiceScores.length > 0) {
+                const bestScore = Math.max(...practiceScores.map(item => item.score));
+                document.getElementById('best-score').textContent = `${bestScore}%`;
+            } else {
+                document.getElementById('best-score').textContent = '-';
+            }
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            const progressCtx = document.getElementById('progress-chart').getContext('2d');
+            const distributionCtx = document.getElementById('distribution-chart').getContext('2d');
+            
+            progressChart = new Chart(progressCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Score Progress',
+                        data: [],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            min: 0,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Excellent (85-100%)', 'Good (70-84%)', 'Fair (60-69%)', 'Needs Work (<60%)'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#10b981',
+                            '#3b82f6',
+                            '#f59e0b',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update charts with data
+        function updateCharts() {
+            // Update progress chart
+            const recentScores = practiceScores.slice(-10).map(item => item.score);
+            const recentDates = practiceScores.slice(-10).map(item => 
+                new Date(item.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            );
+            
+            progressChart.data.labels = recentDates;
+            progressChart.data.datasets[0].data = recentScores;
+            progressChart.update();
+            
+            // Update distribution chart
+            const scoreRanges = [0, 0, 0, 0];
+            practiceScores.forEach(item => {
+                if (item.score >= 85) scoreRanges[0]++;
+                else if (item.score >= 70) scoreRanges[1]++;
+                else if (item.score >= 60) scoreRanges[2]++;
+                else scoreRanges[3]++;
+            });
+            
+            distributionChart.data.datasets[0].data = scoreRanges;
+            distributionChart.update();
+        }
+    </script>
+</body>
+</html>
