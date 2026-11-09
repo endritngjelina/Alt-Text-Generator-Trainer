@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alt Text Generator & Trainer Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-20px, 20px) rotate(5deg); }
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2), 
+                        0 2px 8px 0 rgba(31, 38, 135, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.25),
+                        0 4px 12px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .feature-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .score-excellent { 
+            color: #10b981; 
+            text-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        .score-good { 
+            color: #3b82f6;
+            text-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+        .score-fair { 
+            color: #f59e0b;
+            text-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+        .score-needs-work { 
+            color: #ef4444;
+            text-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .upload-zone {
+            border: 3px dashed #cbd5e1;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(102, 126, 234, 0.1);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        .upload-zone:hover::after {
+            width: 120%;
+            height: 120%;
+        }
+
+        .upload-zone:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.08);
+            transform: scale(1.01);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+        }
+
+        .upload-zone.dragging {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.15);
+            transform: scale(1.03);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.3);
+            border-style: solid;
+        }
+
+        .tab-btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .tab-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: translateX(-50%);
+            transition: width 0.3s ease;
+            border-radius: 2px 2px 0 0;
+        }
+
+        .tab-btn:hover {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        .tab-btn.active::before {
+            width: 100%;
+        }
+
+        .progress-bar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .badge {
+            animation: fadeInScale 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes fadeInScale {
+            from { 
+                opacity: 0; 
+                transform: scale(0.8) translateY(-10px);
+            }
+            to { 
+                opacity: 1; 
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.25);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .practice-image {
+            max-height: 400px;
+            object-fit: contain;
+            transition: transform 0.3s ease;
+        }
+
+        .practice-image:hover {
+            transform: scale(1.02);
+        }
+
+        textarea {
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15),
+                        0 4px 12px rgba(102, 126, 234, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .guideline-item {
+            padding-left: 1.5rem;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .guideline-item::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #10b981;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .guideline-item:hover {
+            padding-left: 1.7rem;
+            color: #667eea;
+        }
+
+        button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s ease, height 0.6s ease;
+        }
+
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .bg-gradient-to-r {
+            background-size: 200% 100%;
+            animation: gradientShift 3s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        h1 {
+            animation: titleFloat 3s ease-in-out infinite;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        .history-item {
+            animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #image-preview img {
+            animation: zoomIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .insight-badge {
+            position: relative;
+            display: inline-block;
+        }
+
+        .insight-badge::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+
+        .insight-badge:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .score-ring {
+            animation: pulseRing 2s ease-in-out infinite;
+        }
+
+        @keyframes pulseRing {
+            0%, 100% { 
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        input[type="file"] {
+            cursor: pointer;
+        }
+
+        ::selection {
+            background: rgba(102, 126, 234, 0.3);
+            color: #1f2937;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+
+        .floating-action {
+            animation: floatAction 6s ease-in-out infinite;
+        }
+
+        @keyframes floatAction {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .typewriter {
+            overflow: hidden;
+            border-right: .15em solid #667eea;
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .15em;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #667eea; }
+        }
+
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .dark-mode {
+            background: linear-gradient(135deg, #1e3a8a 0%, #581c87 100%);
+            color: #e5e7eb;
+        }
+
+        .dark-mode .glass-card {
+            background: rgba(30, 30, 46, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e5e7eb;
+        }
+
+        .dark-mode .glass-card h2,
+        .dark-mode .glass-card h3,
+        .dark-mode .glass-card p,
+        .dark-mode .glass-card label,
+        .dark-mode .glass-card .text-gray-800 {
+            color: #e5e7eb;
+        }
+
+        .dark-mode .glass-card .text-gray-600,
+        .dark-mode .glass-card .text-gray-700 {
+            color: #d1d5db;
+        }
+
+        .dark-mode .glass-card .text-gray-500 {
+            color: #9ca3af;
+        }
+
+        .dark-mode .glass-card .text-gray-400 {
+            color: #6b7280;
+        }
+
+        .dark-mode .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .dark-mode .feature-card {
+            background: rgba(30, 30, 46, 0.8);
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+
+        .dark-mode .upload-zone {
+            border-color: #4b5563;
+        }
+
+        .dark-mode .upload-zone:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .dark-mode textarea {
+            background: rgba(30, 30, 46, 0.7);
+            border-color: #4b5563;
+            color: #e5e7eb;
+        }
+
+        .dark-mode textarea:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .dark-mode .bg-blue-50 {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .dark-mode .bg-yellow-50 {
+            background: rgba(245, 158, 11, 0.2);
+            border-color: rgba(245, 158, 11, 0.5);
+        }
+
+        .dark-mode .bg-green-50 {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .dark-mode .bg-orange-50 {
+            background: rgba(249, 115, 22, 0.2);
+            border-color: rgba(249, 115, 22, 0.5);
+        }
+
+        .dark-mode .bg-purple-100 {
+            background: rgba(167, 139, 250, 0.2);
+        }
+
+        .dark-mode .bg-white {
+            background: rgba(30, 30, 46, 0.9);
+        }
+
+        .dark-mode .bg-gray-100 {
+            background: rgba(30, 30, 46, 0.7);
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8 relative">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg">
+                        <i class="fas fa-eye text-purple-600 text-lg"></i>
+                    </div>
+                    <span class="text-white font-bold text-lg">AltText Pro</span>
+                </div>
+                <div class="flex gap-2">
+                    <button id="theme-toggle" class="bg-white bg-opacity-20 text-white p-2 rounded-lg hover:bg-opacity-30 transition-all">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="bg-white bg-opacity-20 text-white p-2 rounded-lg hover:bg-opacity-30 transition-all">
+                        <i class="fas fa-question"></i>
+                    </button>
+                </div>
+            </div>
+            <h1 class="text-5xl font-bold text-white mb-2 tracking-tight">Alt Text Generator & Trainer Pro</h1>
+            <p class="text-white text-lg opacity-90 font-medium">Master the art of accessible image descriptions with AI-powered assistance</p>
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Stats Banner -->
+        <div class="glass-card rounded-xl p-4 mb-6">
+            <div class="flex flex-wrap justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <div class="w-3 h-3 bg-green-500 rounded-full pulse"></div>
+                        <span class="text-sm font-medium">AI System Active</span>
+                    </div>
+                    <div class="h-4 w-px bg-gray-300"></div>
+                    <div class="text-sm">
+                        <span class="font-medium">Today:</span> 
+                        <span id="today-count">0</span> images processed
+                    </div>
+                </div>
+                <div class="flex gap-4 text-sm">
+                    <div>
+                        <span class="font-medium">Accuracy:</span> 
+                        <span class="text-green-600 font-bold">98.7%</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Avg. Time:</span> 
+                        <span class="text-purple-600 font-bold">1.2s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="glass-card rounded-t-2xl p-1 mb-0">
+            <div class="flex gap-2">
+                <button class="tab-btn active flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('generator')">
+                    <i class="fas fa-magic mr-2"></i>Generator
+                </button>
+                <button class="tab-btn flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('trainer')">
+                    <i class="fas fa-graduation-cap mr-2"></i>Trainer
+                </button>
+                <button class="tab-btn flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('guidelines')">
+                    <i class="fas fa-book mr-2"></i>Guidelines
+                </button>
+                <button class="tab-btn flex-1 py-3 px-6 font-semibold rounded-lg" onclick="switchTab('history')">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </button>
+            </div>
+        </div>
+
+        <!-- Generator Tab -->
+        <div id="generator-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Left Column: Upload & Preview -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload Image</h2>
+                    
+                    <div class="upload-zone rounded-xl p-8 text-center mb-6" id="upload-zone">
+                        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                        <div class="floating-action mb-4">
+                            <i class="fas fa-cloud-upload-alt text-5xl text-gray-400"></i>
+                        </div>
+                        <p class="text-lg font-semibold text-gray-700 mb-2">Drag & drop your image here</p>
+                        <p class="text-sm text-gray-500 mb-4">Supports JPG, PNG, WebP up to 10MB</p>
+                        <button onclick="document.getElementById('file-input').click()" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                            <i class="fas fa-folder-open mr-2"></i>Browse Files
+                        </button>
+                    </div>
+
+                    <div id="image-preview" class="hidden">
+                        <div class="relative">
+                            <img id="preview-img" class="w-full rounded-xl shadow-lg mb-4" alt="Preview">
+                            <div class="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-full text-sm">
+                                <span id="image-size">0 KB</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="analyzeImage()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+                                <i class="fas fa-robot mr-2"></i>Generate Alt Text
+                            </button>
+                            <button onclick="clearImage()" class="px-6 py-3 border-2 border-gray-300 rounded-lg font-semibold hover:border-red-500 hover:text-red-500 transition-all">
+                                <i class="fas fa-times mr-2"></i>Clear
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3">Quick Actions</h3>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button class="bg-white border border-gray-200 p-3 rounded-lg text-center hover:border-purple-500 transition-all">
+                                <i class="fas fa-bolt text-yellow-500 mb-1"></i>
+                                <div class="text-sm font-medium">Quick Analyze</div>
+                            </button>
+                            <button class="bg-white border border-gray-200 p-3 rounded-lg text-center hover:border-purple-500 transition-all">
+                                <i class="fas fa-copy text-blue-500 mb-1"></i>
+                                <div class="text-sm font-medium">Copy Metadata</div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Generated Alt Text -->
+                <div>
+                    <h2 class="text-2xl font-bold mb-4 text-gray-800">Generated Alt Text</h2>
+                    
+                    <div id="alt-text-results" class="hidden">
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="font-semibold text-gray-700">AI-Generated Description</label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm text-gray-500" id="char-count">0 characters</span>
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                </div>
+                            </div>
+                            <textarea id="generated-alt" class="w-full p-4 border-2 border-gray-300 rounded-lg resize-none transition-all" rows="6" placeholder="Alt text will appear here..."></textarea>
+                            <div class="flex justify-between mt-2">
+                                <div class="text-xs text-gray-500">AI Confidence: <span id="ai-confidence" class="font-bold">0%</span></div>
+                                <div class="text-xs text-gray-500">Processing Time: <span id="processing-time" class="font-bold">0s</span></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="stat-card p-4 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">Clarity Score</div>
+                                <div class="flex items-center gap-2">
+                                    <div class="text-2xl font-bold text-purple-600" id="clarity-score">-</div>
+                                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div id="clarity-bar" class="h-full bg-purple-600 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="stat-card p-4 rounded-lg">
+                                <div class="text-sm text-gray-600 mb-1">Length</div>
+                                <div class="text-2xl font-bold text-purple-600" id="length-status">-</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-4">
+                            <h3 class="font-semibold text-blue-900 mb-2 flex items-center">
+                                <i class="fas fa-lightbulb mr-2"></i>AI Insights
+                            </h3>
+                            <ul id="insights-list" class="text-sm text-blue-800 space-y-1">
+                            </ul>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="copyAltText()" class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-all">
+                                <i class="fas fa-copy mr-2"></i>Copy Alt Text
+                            </button>
+                            <button onclick="saveToHistory()" class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-700 transition-all">
+                                <i class="fas fa-save mr-2"></i>Save
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="empty-state" class="text-center py-12">
+                        <i class="fas fa-file-image text-5xl text-gray-300 mb-4"></i>
+                        <p class="text-gray-400 text-lg">Upload an image to generate alt text</p>
+                        <p class="text-gray-400 text-sm mt-2">Our AI will analyze your image and create an accessible description</p>
+                    </div>
+
+                    <!-- AI Features -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-3">AI Features</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
+                                <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-brain text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">Context-Aware Analysis</div>
+                                    <div class="text-sm text-gray-500">Understands image purpose and context</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg">
+                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-green-600"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">Performance Metrics</div>
+                                    <div class="text-sm text-gray-500">Tracks clarity, length, and accessibility</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainer Tab -->
+        <div id="trainer-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8 hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Practice Writing Alt Descriptions</h2>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div>
+                    <div class="mb-4 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-700">Practice Image</h3>
+                        <div class="flex gap-2">
+                            <button onclick="loadPreviousPracticeImage()" class="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-all">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+                            <button onclick="loadNewPracticeImage()" class="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-purple-700 transition-all">
+                                <i class="fas fa-random mr-2"></i>New Image
+                            </button>
+                            <button onclick="loadNextPracticeImage()" class="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-all">
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-100 rounded-xl p-4 mb-4 flex items-center justify-center" style="min-height: 400px;">
+                        <img id="practice-img" class="practice-image rounded-lg shadow-lg" alt="Practice image">
+                    </div>
+
+                    <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-lg">
+                        <h4 class="font-semibold text-yellow-900 mb-2 flex items-center">
+                            <i class="fas fa-info-circle mr-2"></i>Context
+                        </h4>
+                        <p id="image-context" class="text-sm text-yellow-800">This image appears on an e-commerce product page.</p>
+                    </div>
+
+                    <!-- Progress -->
+                    <div class="mt-6">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Practice Progress</span>
+                            <span id="practice-progress">0/10</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="practice-progress-bar" class="bg-purple-600 h-2 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-4">Your Alt Text</h3>
+                    
+                    <textarea id="practice-alt" class="w-full p-4 border-2 border-gray-300 rounded-lg resize-none mb-4 transition-all" rows="8" placeholder="Write your alt text description here..."></textarea>
+
+                    <div class="flex gap-3 mb-6">
+                        <button onclick="evaluatePractice()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:shadow-lg transition-all">
+                            <i class="fas fa-chart-bar mr-2"></i>Evaluate My Description
+                        </button>
+                        <button onclick="showHint()" class="bg-yellow-500 text-white px-4 py-4 rounded-lg font-semibold hover:bg-yellow-600 transition-all">
+                            <i class="fas fa-lightbulb"></i>
+                        </button>
+                    </div>
+
+                    <div id="evaluation-results" class="hidden">
+                        <div class="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-xl p-6 mb-6">
+                            <div class="text-center mb-4">
+                                <div class="text-sm font-semibold text-gray-600 mb-2">OVERALL SCORE</div>
+                                <div class="relative inline-block">
+                                    <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="45" fill="none" stroke="#e5e7eb" stroke-width="8"></circle>
+                                        <circle id="score-ring" class="progress-ring" cx="50" cy="50" r="45" fill="none" stroke="url(#gradient)" stroke-width="8" stroke-dasharray="283" stroke-dashoffset="283"></circle>
+                                        <defs>
+                                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                                <stop offset="0%" stop-color="#667eea" />
+                                                <stop offset="100%" stop-color="#764ba2" />
+                                            </linearGradient>
+                                        </defs>
+                                    </svg>
+                                    <div id="overall-score" class="absolute inset-0 flex items-center justify-center text-3xl font-bold text-purple-700">-</div>
+                                </div>
+                                <div id="score-label" class="text-lg font-semibold mt-2">-</div>
+                            </div>
+                            <div class="bg-white rounded-lg p-4">
+                                <div class="grid grid-cols-3 gap-4 text-center">
+                                    <div>
+                                        <div class="text-2xl font-bold" id="desc-score">-</div>
+                                        <div class="text-xs text-gray-600">Descriptive</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold" id="conc-score">-</div>
+                                        <div class="text-xs text-gray-600">Concise</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold" id="ctx-score">-</div>
+                                        <div class="text-xs text-gray-600">Contextual</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="bg-green-50 border-l-4 border-green-500 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-900 mb-2 flex items-center">
+                                    <i class="fas fa-check-circle mr-2"></i>Strengths
+                                </h4>
+                                <ul id="strengths-list" class="text-sm text-green-800 space-y-1 list-disc list-inside">
+                                </ul>
+                            </div>
+
+                            <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg">
+                                <h4 class="font-semibold text-orange-900 mb-2 flex items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>Areas for Improvement
+                                </h4>
+                                <ul id="improvements-list" class="text-sm text-orange-800 space-y-1 list-disc list-inside">
+                                </ul>
+                            </div>
+
+                            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                                <h4 class="font-semibold text-blue-900 mb-2 flex items-center">
+                                    <i class="fas fa-edit mr-2"></i>Suggested Version
+                                </h4>
+                                <p id="suggested-alt" class="text-sm text-blue-800 italic"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines Tab -->
+        <div id="guidelines-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8 hidden">
+            <h2 class="text-3xl font-bold mb-6 text-gray-800">Alt Text Best Practices</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="feature-card bg-gradient-to-br from-purple-50 to-indigo-50 p-6 rounded-xl border border-purple-200">
+                    <div class="text-3xl mb-3">🎯</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Be Specific & Accurate</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">Describe what's actually in the image</li>
+                        <li class="guideline-item">Include relevant details about colors, objects, and actions</li>
+                        <li class="guideline-item">Avoid subjective interpretations</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-gradient-to-br from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
+                    <div class="text-3xl mb-3">✂️</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Keep It Concise</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">Aim for 125 characters or less</li>
+                        <li class="guideline-item">Focus on the most important elements</li>
+                        <li class="guideline-item">Avoid redundant phrases like "image of" or "picture of"</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
+                    <div class="text-3xl mb-3">🎨</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Context Matters</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">Consider where the image appears</li>
+                        <li class="guideline-item">Match the description to user needs</li>
+                        <li class="guideline-item">Include information relevant to the content</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card bg-gradient-to-br from-orange-50 to-amber-50 p-6 rounded-xl border border-orange-200">
+                    <div class="text-3xl mb-3">⚡</div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-3">Functional Images</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li class="guideline-item">For buttons/links: describe the action</li>
+                        <li class="guideline-item">For icons: explain their purpose</li>
+                        <li class="guideline-item">For decorative images: use empty alt=""</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-8 bg-gradient-to-r from-purple-100 to-indigo-100 p-6 rounded-xl">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📖 Quick Examples</h3>
+                
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">❌</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-red-700 mb-1">Poor:</div>
+                                <div class="text-gray-700 italic">"Image of a dog"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">✅</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-green-700 mb-1">Better:</div>
+                                <div class="text-gray-700 italic">"Golden retriever puppy playing with a red ball on grass"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">❌</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-red-700 mb-1">Poor:</div>
+                                <div class="text-gray-700 italic">"A very beautiful sunset over the ocean with amazing colors in the sky and waves crashing on the beach"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg">
+                        <div class="flex items-start gap-3">
+                            <span class="text-2xl">✅</span>
+                            <div class="flex-1">
+                                <div class="font-semibold text-green-700 mb-1">Better:</div>
+                                <div class="text-gray-700 italic">"Sunset over ocean with orange and pink sky"</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Guidelines -->
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Advanced Guidelines</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-gray-800 mb-2">Complex Images</h4>
+                        <p class="text-sm text-gray-600">For charts, graphs, and infographics, provide a brief summary and link to detailed data.</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-gray-800 mb-2">Text in Images</h4>
+                        <p class="text-sm text-gray-600">Always include any text that appears in the image in your alt description.</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <h4 class="font-bold text-gray-800 mb-2">Emotional Context</h4>
+                        <p class="text-sm text-gray-600">When relevant, include emotional context (e.g., "person smiling" vs "person frowning").</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="history-tab" class="glass-card rounded-b-2xl rounded-tr-2xl p-8 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Your Alt Text Analytics</h2>
+                <div class="flex gap-2">
+                    <button class="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-all">
+                        <i class="fas fa-download mr-2"></i>Export Data
+                    </button>
+                    <button onclick="clearHistory()" class="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-all">
+                        <i class="fas fa-trash mr-2"></i>Clear History
+                    </button>
+                </div>
+            </div>
+
+            <div id="history-stats" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Total Generated</div>
+                    <div class="text-3xl font-bold text-purple-600" id="total-generated">0</div>
+                </div>
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Avg Score</div>
+                    <div class="text-3xl font-bold text-purple-600" id="avg-score">-</div>
+                </div>
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Practice Sessions</div>
+                    <div class="text-3xl font-bold text-purple-600" id="practice-count">0</div>
+                </div>
+                <div class="stat-card p-4 rounded-lg">
+                    <div class="text-sm text-gray-600 mb-1">Best Score</div>
+                    <div class="text-3xl font-bold text-purple-600" id="best-score">-</div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="glass-card p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Score Distribution</h3>
+                    <div class="h-64">
+                        <canvas id="score-chart"></canvas>
+                    </div>
+                </div>
+                <div class="glass-card p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-gray-800 mb-4">Weekly Activity</h3>
+                    <div class="h-64">
+                        <canvas id="activity-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="history-list" class="space-y-4">
+            </div>
+
+            <div id="history-empty" class="text-center py-12">
+                <i class="fas fa-chart-bar text-5xl text-gray-300 mb-4"></i>
+                <p class="text-gray-400 text-lg">No analytics data yet. Start generating alt text!</p>
+                <p class="text-gray-400 text-sm mt-2">Your progress and statistics will appear here</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fixed bottom-6 right-6">
+        <button class="floating-action bg-gradient-to-r from-purple-600 to-indigo-600 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:shadow-xl transition-all">
+            <i class="fas fa-bolt"></i>
+        </button>
+    </div>
+
+    <script>
+        // Enhanced application state
+        let currentImage = null;
+        let history = JSON.parse(localStorage.getItem('altTextHistory')) || [];
+        let practiceScores = JSON.parse(localStorage.getItem('practiceScores')) || [];
+        let currentPracticeIndex = 0;
+        let practiceCount = 0;
+        let todayCount = 0;
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Enhanced practice images with contexts
+        const practiceImages = [
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzg3Q0VFQiIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjEwMCIgcj0iNTAiIGZpbGw9IiNGRkQ3MDAiLz48cGF0aCBkPSJNMCwzMDAgUTMwMCwyMDAgNjAwLDMwMCBMNjAwLDQwMCBMMCw0MDAgWiIgZmlsbD0iIzIyOEIyMiIvPjxyZWN0IHg9IjI1MCIgeT0iMTUwIiB3aWR0aD0iODAiIGhlaWdodD0iMTUwIiBmaWxsPSIjOEI0NTEzIi8+PGNpcmNsZSBjeD0iMjkwIiBjeT0iMTgwIiByPSI4MCIgZmlsbD0iIzIyOEIyMiIvPjwvc3ZnPg==',
+                context: 'This image appears on a children\'s storybook website.',
+                ideal: 'Sunny landscape with a yellow sun, green hills, and a tree with a round green crown'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0ZGRkZGRiIvPjxyZWN0IHg9IjUwIiB5PSI1MCIgd2lkdGg9IjUwMCIgaGVpZ2h0PSIzMDAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzMzMzMzMyIgc3Ryb2tlLXdpZHRoPSI0Ii8+PHBhdGggZD0iTTUwLDIwMCBMNTUwLDIwMCIgc3Ryb2tlPSIjMzMzMzMzIiBzdHJva2Utd2lkdGg9IjQiLz48cGF0aCBkPSJNMzAwLDUwIEwzMDAsMzUwIiBzdHJva2U9IiMzMzMzMzMiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjEyNSIgcj0iNDAiIGZpbGw9IiNGRjAwMDAiLz48Y2lyY2xlIGN4PSI0MDAiIGN5PSIyNzUiIHI9IjQwIiBmaWxsPSIjMDBGRjAwIi8+PHRleHQgeD0iMzAwIiB5PSIzOTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzMzMzMzMyI+U2FsZXMgRGF0YTwvdGV4dD48L3N2Zz4=',
+                context: 'This chart appears in a business report for stakeholders.',
+                ideal: 'Bar chart showing quarterly sales data with red and green data points'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0YwRjBGMCIvPjxyZWN0IHg9IjE1MCIgeT0iMTAwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgcng9IjIwIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjRDFENUREIiBzdHJva2Utd2lkdGg9IjMiLz48Y2lyY2xlIGN4PSIyMjUiIGN5PSIxNzUiIHI9IjMwIiBmaWxsPSIjNDI4NUY0Ii8+PHRleHQgeD0iMzAwIiB5PSIxODUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxOCIgZmlsbD0iIzMzMzMzMyI+TG9naW48L3RleHQ+PHJlY3QgeD0iMTgwIiB5PSIyMjAiIHdpZHRoPSIyNDAiIGhlaWdodD0iMzAiIHJ4PSI1IiBmaWxsPSIjRTBFMEUwIi8+PHJlY3QgeD0iMTgwIiB5PSIyNjAiIHdpZHRoPSIyNDAiIGhlaWdodD0iMzAiIHJ4PSI1IiBmaWxsPSIjRTBFMEUwIi8+PC9zdmc+',
+                context: 'This UI mockup appears in design documentation for developers.',
+                ideal: 'Login form mockup with blue user icon, username and password fields'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzJDM0U1MCIvPjxwYXRoIGQ9Ik0xMDAsMzAwIEwyMDAsMjAwIEwzMDAsMjUwIEw0MDAsMTUwIEw1MDAsMjAwIiBmaWxsPSJub25lIiBzdHJva2U9IiMxQUJDOUMiIHN0cm9rZS13aWR0aD0iNCIvPjxjaXJjbGUgY3g9IjEwMCIgY3k9IjMwMCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjIwMCIgY3k9IjIwMCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjI1MCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjQwMCIgY3k9IjE1MCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjxjaXJjbGUgY3g9IjUwMCIgY3k9IjIwMCIgcj0iNiIgZmlsbD0iIzFBQkM5QyIvPjx0ZXh0IHg9IjMwMCIgeT0iNTAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyNCIgZm9udC13ZWlnaHQ9ImJvbGQiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGZpbGw9IiNFQ0Y0RjQiPlJldmVudWUgVHJlbmQ8L3RleHQ+PC9zdmc+',
+                context: 'This graph appears in a financial dashboard for investors.',
+                ideal: 'Line graph showing upward revenue trend over five quarters with blue line'
+            }
+        ];
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            updateStats();
+            loadPracticeImage(0);
+            initializeCharts();
+            
+            // Set today's count
+            const today = new Date().toDateString();
+            const todayData = JSON.parse(localStorage.getItem('todayData')) || { date: today, count: 0 };
+            if (todayData.date !== today) {
+                todayData.date = today;
+                todayData.count = 0;
+            }
+            todayCount = todayData.count;
+            document.getElementById('today-count').textContent = todayCount;
+            
+            // Apply dark mode if enabled
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+        });
+
+        function initializeApp() {
+            // Initialize drag and drop
+            const uploadZone = document.getElementById('upload-zone');
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragging');
+            });
+            
+            uploadZone.addEventListener('dragleave', function() {
+                uploadZone.classList.remove('dragging');
+            });
+            
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragging');
+                if (e.dataTransfer.files.length) {
+                    handleFileSelect({ target: { files: e.dataTransfer.files } });
+                }
+            });
+        }
+
+        function setupEventListeners() {
+            // Theme toggle
+            document.getElementById('theme-toggle').addEventListener('click', toggleDarkMode);
+            
+            // Character count for generated alt text
+            document.getElementById('generated-alt').addEventListener('input', function() {
+                const charCount = this.value.length;
+                document.getElementById('char-count').textContent = `${charCount} characters`;
+                
+                // Update length status
+                let lengthStatus = 'Optimal';
+                let lengthColor = 'text-green-600';
+                
+                if (charCount < 50) {
+                    lengthStatus = 'Too Short';
+                    lengthColor = 'text-red-600';
+                } else if (charCount > 125) {
+                    lengthStatus = 'Too Long';
+                    lengthColor = 'text-yellow-600';
+                }
+                
+                document.getElementById('length-status').textContent = lengthStatus;
+                document.getElementById('length-status').className = `text-2xl font-bold ${lengthColor}`;
+            });
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark-mode');
+            
+            if (isDarkMode) {
+                document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                document.getElementById('theme-toggle').innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            
+            localStorage.setItem('darkMode', isDarkMode);
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.getElementById('generator-tab').classList.add('hidden');
+            document.getElementById('trainer-tab').classList.add('hidden');
+            document.getElementById('guidelines-tab').classList.add('hidden');
+            document.getElementById('history-tab').classList.add('hidden');
+            
+            // Remove active class from all tabs
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected tab and set active class
+            document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            // Update charts when switching to analytics tab
+            if (tabName === 'history') {
+                updateCharts();
+            }
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            if (!file.type.match('image.*')) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentImage = {
+                    src: e.target.result,
+                    name: file.name,
+                    size: file.size
+                };
+                
+                document.getElementById('preview-img').src = currentImage.src;
+                document.getElementById('image-preview').classList.remove('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('alt-text-results').classList.add('hidden');
+                
+                // Display image size
+                const sizeInKB = Math.round(file.size / 1024);
+                document.getElementById('image-size').textContent = `${sizeInKB} KB`;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        function analyzeImage() {
+            if (!currentImage) return;
+            
+            // Show loading state
+            const generateButton = document.querySelector('#image-preview button');
+            const originalText = generateButton.textContent;
+            generateButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Analyzing...';
+            generateButton.disabled = true;
+            
+            // Simulate AI processing
+            setTimeout(() => {
+                // Generate alt text based on image (in a real app, this would call an AI API)
+                const altText = generateAltText(currentImage);
+                
+                document.getElementById('generated-alt').value = altText;
+                document.getElementById('char-count').textContent = `${altText.length} characters`;
+                document.getElementById('alt-text-results').classList.remove('hidden');
+                
+                // Update scores and insights
+                updateScoresAndInsights(altText);
+                
+                // Reset button
+                generateButton.innerHTML = '<i class="fas fa-robot mr-2"></i>Generate Alt Text';
+                generateButton.disabled = false;
+                
+                // Update today's count
+                todayCount++;
+                document.getElementById('today-count').textContent = todayCount;
+                const today = new Date().toDateString();
+                localStorage.setItem('todayData', JSON.stringify({ date: today, count: todayCount }));
+            }, 1500);
+        }
+
+        function generateAltText(image) {
+            // In a real application, this would call an AI API
+            // For demo purposes, we'll return a placeholder description
+            const descriptions = [
+                "A vibrant landscape with lush greenery and a clear blue sky",
+                "Modern user interface with clean design and intuitive layout",
+                "Colorful data visualization chart showing trends over time",
+                "Product photography with professional lighting and composition"
+            ];
+            
+            return descriptions[Math.floor(Math.random() * descriptions.length)];
+        }
+
+        function updateScoresAndInsights(altText) {
+            // Generate random scores for demo (in a real app, these would come from AI analysis)
+            const clarityScore = Math.floor(Math.random() * 40) + 60; // 60-100
+            const aiConfidence = Math.floor(Math.random() * 20) + 80; // 80-100
+            const processingTime = (Math.random() * 2 + 0.5).toFixed(1); // 0.5-2.5 seconds
+            
+            document.getElementById('clarity-score').textContent = `${clarityScore}%`;
+            document.getElementById('clarity-bar').style.width = `${clarityScore}%`;
+            document.getElementById('ai-confidence').textContent = `${aiConfidence}%`;
+            document.getElementById('processing-time').textContent = `${processingTime}s`;
+            
+            // Update length status
+            const charCount = altText.length;
+            let lengthStatus = 'Optimal';
+            let lengthColor = 'text-green-600';
+            
+            if (charCount < 50) {
+                lengthStatus = 'Too Short';
+                lengthColor = 'text-red-600';
+            } else if (charCount > 125) {
+                lengthStatus = 'Too Long';
+                lengthColor = 'text-yellow-600';
+            }
+            
+            document.getElementById('length-status').textContent = lengthStatus;
+            document.getElementById('length-status').className = `text-2xl font-bold ${lengthColor}`;
+            
+            // Generate insights
+            const insightsList = document.getElementById('insights-list');
+            insightsList.innerHTML = '';
+            
+            const insights = [
+                "Description focuses on the main subject effectively",
+                "Good use of descriptive adjectives",
+                "Appropriate length for most screen readers",
+                "Considers visual elements and composition"
+            ];
+            
+            insights.forEach(insight => {
+                const li = document.createElement('li');
+                li.className = 'flex items-start';
+                li.innerHTML = `<i class="fas fa-check text-green-500 mr-2 mt-0.5"></i> ${insight}`;
+                insightsList.appendChild(li);
+            });
+        }
+
+        function copyAltText() {
+            const altText = document.getElementById('generated-alt').value;
+            navigator.clipboard.writeText(altText).then(() => {
+                // Show success feedback
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+                button.classList.remove('bg-green-600');
+                button.classList.add('bg-green-700');
+                
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('bg-green-700');
+                    button.classList.add('bg-green-600');
+                }, 2000);
+            });
+        }
+
+        function saveToHistory() {
+            const altText = document.getElementById('generated-alt').value;
+            const clarityScore = parseInt(document.getElementById('clarity-score').textContent);
+            
+            const historyItem = {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                altText: altText,
+                score: clarityScore,
+                image: currentImage ? currentImage.src : null
+            };
+            
+            history.unshift(historyItem);
+            localStorage.setItem('altTextHistory', JSON.stringify(history));
+            
+            // Show success feedback
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
+            button.classList.remove('bg-purple-600');
+            button.classList.add('bg-purple-700');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('bg-purple-700');
+                button.classList.add('bg-purple-600');
+            }, 2000);
+            
+            updateStats();
+        }
+
+        function clearImage() {
+            currentImage = null;
+            document.getElementById('file-input').value = '';
+            document.getElementById('image-preview').classList.add('hidden');
+            document.getElementById('alt-text-results').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+        }
+
+        function loadPracticeImage(index) {
+            if (index < 0) index = practiceImages.length - 1;
+            if (index >= practiceImages.length) index = 0;
+            
+            currentPracticeIndex = index;
+            const image = practiceImages[currentPracticeIndex];
+            
+            document.getElementById('practice-img').src = image.url;
+            document.getElementById('image-context').textContent = image.context;
+            document.getElementById('practice-alt').value = '';
+            document.getElementById('evaluation-results').classList.add('hidden');
+        }
+
+        function loadNewPracticeImage() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * practiceImages.length);
+            } while (newIndex === currentPracticeIndex && practiceImages.length > 1);
+            
+            loadPracticeImage(newIndex);
+        }
+
+        function loadPreviousPracticeImage() {
+            loadPracticeImage(currentPracticeIndex - 1);
+        }
+
+        function loadNextPracticeImage() {
+            loadPracticeImage(currentPracticeIndex + 1);
+        }
+
+        function evaluatePractice() {
+            const userText = document.getElementById('practice-alt').value.trim();
+            if (!userText) {
+                alert('Please write an alt text description first');
+                return;
+            }
+            
+            const idealText = practiceImages[currentPracticeIndex].ideal;
+            
+            // Calculate scores (in a real app, this would use more sophisticated NLP)
+            const descScore = calculateDescriptiveScore(userText, idealText);
+            const concScore = calculateConcisenessScore(userText);
+            const ctxScore = calculateContextScore(userText, idealText);
+            
+            const overallScore = Math.round((descScore + concScore + ctxScore) / 3);
+            
+            // Update UI with scores
+            document.getElementById('desc-score').textContent = descScore;
+            document.getElementById('conc-score').textContent = concScore;
+            document.getElementById('ctx-score').textContent = ctxScore;
+            document.getElementById('overall-score').textContent = overallScore;
+            
+            // Update score ring
+            const circumference = 283; // 2 * π * 45
+            const offset = circumference - (overallScore / 100) * circumference;
+            document.getElementById('score-ring').style.strokeDashoffset = offset;
+            
+            // Set score label and color
+            let scoreLabel = 'Needs Work';
+            let scoreColor = 'text-red-600';
+            
+            if (overallScore >= 90) {
+                scoreLabel = 'Excellent';
+                scoreColor = 'text-green-600';
+            } else if (overallScore >= 75) {
+                scoreLabel = 'Good';
+                scoreColor = 'text-blue-600';
+            } else if (overallScore >= 60) {
+                scoreLabel = 'Fair';
+                scoreColor = 'text-yellow-600';
+            }
+            
+            document.getElementById('score-label').textContent = scoreLabel;
+            document.getElementById('score-label').className = `text-lg font-semibold mt-2 ${scoreColor}`;
+            
+            // Generate feedback
+            generateFeedback(userText, idealText, descScore, concScore, ctxScore);
+            
+            // Show results
+            document.getElementById('evaluation-results').classList.remove('hidden');
+            
+            // Save practice score
+            practiceScores.push({
+                timestamp: new Date().toISOString(),
+                score: overallScore,
+                imageIndex: currentPracticeIndex
+            });
+            localStorage.setItem('practiceScores', JSON.stringify(practiceScores));
+            practiceCount++;
+            
+            // Update progress
+            updatePracticeProgress();
+            
+            // Update stats
+            updateStats();
+        }
+
+        function calculateDescriptiveScore(userText, idealText) {
+            // Simple implementation - in a real app, this would use more advanced NLP
+            const userWords = userText.toLowerCase().split(/\s+/);
+            const idealWords = idealText.toLowerCase().split(/\s+/);
+            
+            let matches = 0;
+            for (const word of idealWords) {
+                if (userWords.includes(word)) {
+                    matches++;
+                }
+            }
+            
+            return Math.min(100, Math.round((matches / idealWords.length) * 100));
+        }
+
+        function calculateConcisenessScore(userText) {
+            // Score based on length (optimal: 50-125 characters)
+            const length = userText.length;
+            
+            if (length >= 50 && length <= 125) {
+                return 100;
+            } else if (length < 30 || length > 200) {
+                return 40;
+            } else {
+                return 70;
+            }
+        }
+
+        function calculateContextScore(userText, idealText) {
+            // Simple context matching - in a real app, this would be more sophisticated
+            const context = practiceImages[currentPracticeIndex].context.toLowerCase();
+            const userLower = userText.toLowerCase();
+            
+            if (context.includes('e-commerce') && userLower.includes('product')) {
+                return 100;
+            } else if (context.includes('business') && (userLower.includes('data') || userLower.includes('chart'))) {
+                return 100;
+            } else if (context.includes('storybook') && (userLower.includes('landscape') || userLower.includes('scene'))) {
+                return 100;
+            } else if (context.includes('financial') && (userLower.includes('trend') || userLower.includes('graph'))) {
+                return 100;
+            }
+            
+            return 70;
+        }
+
+        function generateFeedback(userText, idealText, descScore, concScore, ctxScore) {
+            const strengthsList = document.getElementById('strengths-list');
+            const improvementsList = document.getElementById('improvements-list');
+            
+            strengthsList.innerHTML = '';
+            improvementsList.innerHTML = '';
+            
+            // Strengths
+            if (descScore >= 80) {
+                addListItem(strengthsList, "Good descriptive details");
+            }
+            
+            if (concScore >= 80) {
+                addListItem(strengthsList, "Appropriate length for screen readers");
+            }
+            
+            if (ctxScore >= 80) {
+                addListItem(strengthsList, "Relevant to the image context");
+            }
+            
+            if (userText.length > 0 && !userText.toLowerCase().includes('image of')) {
+                addListItem(strengthsList, "Avoids redundant phrases like 'image of'");
+            }
+            
+            // Areas for improvement
+            if (descScore < 70) {
+                addListItem(improvementsList, "Add more specific details about the image content");
+            }
+            
+            if (concScore < 70) {
+                if (userText.length < 50) {
+                    addListItem(improvementsList, "Consider adding more descriptive elements");
+                } else {
+                    addListItem(improvementsList, "Try to be more concise (aim for 50-125 characters)");
+                }
+            }
+            
+            if (ctxScore < 70) {
+                addListItem(improvementsList, "Consider the context where this image would appear");
+            }
+            
+            if (userText.toLowerCase().includes('image of') || userText.toLowerCase().includes('picture of')) {
+                addListItem(improvementsList, "Avoid phrases like 'image of' or 'picture of'");
+            }
+            
+            // Suggested version
+            document.getElementById('suggested-alt').textContent = idealText;
+        }
+
+        function addListItem(list, text) {
+            const li = document.createElement('li');
+            li.textContent = text;
+            list.appendChild(li);
+        }
+
+        function showHint() {
+            const idealText = practiceImages[currentPracticeIndex].ideal;
+            alert(`Hint: Try to include elements like "${idealText.split(' ').slice(0, 3).join(' ')}..."`);
+        }
+
+        function updatePracticeProgress() {
+            const progress = Math.min(practiceCount, 10);
+            document.getElementById('practice-progress').textContent = `${progress}/10`;
+            document.getElementById('practice-progress-bar').style.width = `${(progress / 10) * 100}%`;
+        }
+
+        function updateStats() {
+            document.getElementById('total-generated').textContent = history.length;
+            document.getElementById('practice-count').textContent = practiceScores.length;
+            
+            // Calculate average score
+            if (practiceScores.length > 0) {
+                const totalScore = practiceScores.reduce((sum, item) => sum + item.score, 0);
+                const avgScore = Math.round(totalScore / practiceScores.length);
+                document.getElementById('avg-score').textContent = avgScore;
+                
+                // Find best score
+                const bestScore = Math.max(...practiceScores.map(item => item.score));
+                document.getElementById('best-score').textContent = bestScore;
+            }
+            
+            // Update history list
+            updateHistoryList();
+        }
+
+        function updateHistoryList() {
+            const historyList = document.getElementById('history-list');
+            const historyEmpty = document.getElementById('history-empty');
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '';
+                historyEmpty.classList.remove('hidden');
+                return;
+            }
+            
+            historyEmpty.classList.add('hidden');
+            historyList.innerHTML = '';
+            
+            // Show only recent 5 items
+            const recentHistory = history.slice(0, 5);
+            
+            recentHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item glass-card p-4 rounded-lg';
+                
+                const date = new Date(item.timestamp).toLocaleDateString();
+                const time = new Date(item.timestamp).toLocaleTimeString();
+                
+                historyItem.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="font-semibold text-gray-800">${item.altText}</div>
+                        <div class="text-sm text-gray-500">${date} ${time}</div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <div class="w-3 h-3 rounded-full ${getScoreColor(item.score)}"></div>
+                            <span class="text-sm font-medium">Score: ${item.score}%</span>
+                        </div>
+                        <button onclick="copyHistoryItem('${item.id}')" class="text-purple-600 hover:text-purple-800 transition-colors">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                `;
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function getScoreColor(score) {
+            if (score >= 90) return 'bg-green-500';
+            if (score >= 75) return 'bg-blue-500';
+            if (score >= 60) return 'bg-yellow-500';
+            return 'bg-red-500';
+        }
+
+        function copyHistoryItem(id) {
+            const item = history.find(item => item.id == id);
+            if (item) {
+                navigator.clipboard.writeText(item.altText).then(() => {
+                    // Show feedback
+                    const button = event.target;
+                    button.innerHTML = '<i class="fas fa-check"></i>';
+                    
+                    setTimeout(() => {
+                        button.innerHTML = '<i class="fas fa-copy"></i>';
+                    }, 2000);
+                });
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all history? This action cannot be undone.')) {
+                history = [];
+                practiceScores = [];
+                practiceCount = 0;
+                localStorage.setItem('altTextHistory', JSON.stringify(history));
+                localStorage.setItem('practiceScores', JSON.stringify(practiceScores));
+                updateStats();
+                updateCharts();
+            }
+        }
+
+        function initializeCharts() {
+            // Score distribution chart
+            const scoreCtx = document.getElementById('score-chart').getContext('2d');
+            window.scoreChart = new Chart(scoreCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Excellent (90-100)', 'Good (75-89)', 'Fair (60-74)', 'Needs Work (<60)'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#10b981',
+                            '#3b82f6',
+                            '#f59e0b',
+                            '#ef4444'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Activity chart
+            const activityCtx = document.getElementById('activity-chart').getContext('2d');
+            window.activityChart = new Chart(activityCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Practice Sessions',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!window.scoreChart || !window.activityChart) return;
+            
+            // Update score distribution
+            const scoreRanges = [0, 0, 0, 0]; // Excellent, Good, Fair, Needs Work
+            
+            practiceScores.forEach(score => {
+                if (score.score >= 90) scoreRanges[0]++;
+                else if (score.score >= 75) scoreRanges[1]++;
+                else if (score.score >= 60) scoreRanges[2]++;
+                else scoreRanges[3]++;
+            });
+            
+            window.scoreChart.data.datasets[0].data = scoreRanges;
+            window.scoreChart.update();
+            
+            // Update activity (for demo, we'll use random data)
+            const activityData = Array(7).fill(0).map(() => Math.floor(Math.random() * 5));
+            window.activityChart.data.datasets[0].data = activityData;
+            window.activityChart.update();
+        }
+    </script>
+</body>
+</html>
