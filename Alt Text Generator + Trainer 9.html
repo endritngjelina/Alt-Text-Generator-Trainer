@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AltAI: Advanced Alt Text Generator & Trainer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --dark: #1f2937;
+            --light: #f9fafb;
+        }
+        
+        body {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dark-glass {
+            background: rgba(31, 41, 55, 0.9);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .image-preview {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .image-preview:hover {
+            transform: scale(1.03);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+        }
+        
+        .upload-zone {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 3px dashed #cbd5e0;
+            background: linear-gradient(145deg, #f9fafb, #ffffff);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .upload-zone:hover::before {
+            left: 100%;
+        }
+        
+        .upload-zone.drag-over {
+            border-color: var(--primary);
+            background: linear-gradient(145deg, rgba(102, 126, 234, 0.08), rgba(102, 126, 234, 0.12));
+            transform: scale(1.02);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .score-bar {
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .score-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95);
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .pulse-animation {
+            animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                opacity: 1; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.8; 
+                transform: scale(0.98);
+            }
+        }
+        
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        textarea, input, select {
+            transition: all 0.3s ease;
+        }
+        
+        .tab-button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: white;
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .tab-button:hover {
+            background: rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .tab-button.active::before {
+            width: 80%;
+        }
+        
+        .best-practice-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .best-practice-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 0.75rem;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        
+        .best-practice-card:hover {
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+            transform: translateY(-4px) scale(1.02);
+        }
+        
+        .best-practice-card:hover::before {
+            opacity: 1;
+        }
+        
+        button {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .metric-card {
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-title {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: titleShine 3s ease-in-out infinite;
+        }
+        
+        @keyframes titleShine {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.9; }
+        }
+        
+        .score-display {
+            animation: scoreReveal 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes scoreReveal {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(-5deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(2deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+        
+        .feedback-item {
+            animation: slideInLeft 0.5s ease;
+            animation-fill-mode: both;
+        }
+        
+        .feedback-item:nth-child(1) { animation-delay: 0.1s; }
+        .feedback-item:nth-child(2) { animation-delay: 0.2s; }
+        .feedback-item:nth-child(3) { animation-delay: 0.3s; }
+        .feedback-item:nth-child(4) { animation-delay: 0.4s; }
+        
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .icon-container {
+            transition: all 0.3s ease;
+        }
+        
+        .icon-container:hover {
+            transform: rotate(10deg) scale(1.1);
+        }
+        
+        svg {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+        
+        .example-box {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .example-box:hover {
+            border-left-color: var(--primary);
+            background: rgba(102, 126, 234, 0.03);
+            transform: translateX(4px);
+        }
+        
+        .input-glow {
+            box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            animation: inputGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes inputGlow {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(102, 126, 234, 0);
+            }
+            50% {
+                box-shadow: 0 0 20px 5px rgba(102, 126, 234, 0.2);
+            }
+        }
+        
+        .progress-ring {
+            transition: stroke-dashoffset 0.5s ease;
+            transform: rotate(-90deg);
+        }
+        
+        .typewriter {
+            overflow: hidden;
+            border-right: .15em solid var(--primary);
+            white-space: nowrap;
+            margin: 0 auto;
+            letter-spacing: .15em;
+            animation: typing 3.5s steps(40, end), blink-caret .75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: var(--primary); }
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translate(0, 0px); }
+            50% { transform: translate(0, 15px); }
+            100% { transform: translate(0, -0px); }
+        }
+        
+        .dark-mode {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
+            color: #f8fafc;
+        }
+        
+        .dark-mode .glass-effect {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+        }
+        
+        .dark-mode .text-gray-800 {
+            color: #f1f5f9;
+        }
+        
+        .dark-mode .text-gray-600 {
+            color: #cbd5e1;
+        }
+        
+        .dark-mode .text-gray-700 {
+            color: #e2e8f0;
+        }
+        
+        .dark-mode .bg-white {
+            background-color: #1e293b;
+        }
+        
+        .dark-mode .bg-gray-50 {
+            background-color: #334155;
+        }
+        
+        .dark-mode .bg-gray-100 {
+            background-color: #475569;
+        }
+        
+        .dark-mode .border-gray-300 {
+            border-color: #475569;
+        }
+        
+        .dark-mode input, .dark-mode textarea, .dark-mode select {
+            background-color: #334155;
+            color: #f8fafc;
+            border-color: #475569;
+        }
+        
+        .dark-mode .header-title {
+            background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8 fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 flex items-center justify-center mr-3">
+                        <i class="fas fa-eye text-white"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white">AltAI</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="theme-toggle" class="bg-white/10 backdrop-blur-lg text-white p-2 rounded-lg hover:bg-white/20 transition-all">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="bg-white/10 backdrop-blur-lg text-white p-2 rounded-lg hover:bg-white/20 transition-all">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <h1 class="header-title text-5xl font-black mb-3 tracking-tight">AltAI: Advanced Alt Text Generator</h1>
+            <p class="text-xl text-white opacity-90 font-light">Create accessible, meaningful image descriptions with cutting-edge AI assistance</p>
+            
+            <!-- Stats Bar -->
+            <div class="flex justify-center mt-6">
+                <div class="glass-effect rounded-2xl p-4 flex space-x-8">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">15K+</div>
+                        <div class="text-sm text-gray-600">Images Processed</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">98%</div>
+                        <div class="text-sm text-gray-600">Accessibility Score</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">4.9★</div>
+                        <div class="text-sm text-gray-600">User Rating</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="flex justify-center mb-6 fade-in">
+            <div class="glass-effect rounded-full p-1 inline-flex shadow-lg">
+                <button onclick="switchTab('generator')" id="tab-generator" class="tab-button active px-6 py-3 rounded-full font-semibold transition-all">
+                    <i class="fas fa-robot mr-2"></i>AI Generator
+                </button>
+                <button onclick="switchTab('trainer')" id="tab-trainer" class="tab-button px-6 py-3 rounded-full font-semibold transition-all">
+                    <i class="fas fa-graduation-cap mr-2"></i>Trainer
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="tab-button px-6 py-3 rounded-full font-semibold transition-all">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </button>
+                <button onclick="switchTab('guide')" id="tab-guide" class="tab-button px-6 py-3 rounded-full font-semibold transition-all">
+                    <i class="fas fa-book mr-2"></i>Best Practices
+                </button>
+            </div>
+        </div>
+
+        <!-- Generator Tab -->
+        <div id="generator-tab" class="fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Upload Section -->
+                <div class="glass-effect rounded-2xl p-8 shadow-2xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-cloud-upload-alt text-purple-600 mr-3"></i>
+                        Upload Image
+                    </h2>
+                    
+                    <div id="upload-zone" class="upload-zone rounded-xl p-12 text-center cursor-pointer mb-6 relative">
+                        <div class="floating">
+                            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4 icon-container" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                        </div>
+                        <p class="text-lg font-semibold text-gray-700 mb-2">Drop your image here or click to browse</p>
+                        <p class="text-sm text-gray-500">Supports JPG, PNG, GIF, WebP (Max 10MB)</p>
+                        <input type="file" id="image-input" accept="image/*" class="hidden">
+                    </div>
+
+                    <div id="preview-container" class="hidden mb-6">
+                        <div class="relative">
+                            <img id="image-preview" class="image-preview w-full rounded-xl shadow-lg" alt="Preview">
+                            <div class="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+                                <i class="fas fa-image mr-1"></i>
+                                <span id="img-format">JPG</span>
+                            </div>
+                        </div>
+                        <button onclick="removeImage()" class="mt-4 w-full py-3 bg-red-500 text-white rounded-xl font-semibold hover:bg-red-600 transition-all flex items-center justify-center">
+                            <i class="fas fa-trash mr-2"></i>
+                            Remove Image
+                        </button>
+                    </div>
+
+                    <!-- Image Analysis -->
+                    <div id="analysis-section" class="hidden">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-chart-pie text-blue-600 mr-2"></i>
+                            Image Analysis
+                        </h3>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Dimensions:</span>
+                                <span id="img-dimensions" class="font-semibold text-gray-800">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">File Size:</span>
+                                <span id="img-size" class="font-semibold text-gray-800">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Color Palette:</span>
+                                <div id="color-palette" class="flex space-x-1">
+                                    <!-- Color dots will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generation Section -->
+                <div class="glass-effect rounded-2xl p-8 shadow-2xl">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-magic text-purple-600 mr-3"></i>
+                        Alt Text Generation
+                    </h2>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Context (Optional)</label>
+                        <input type="text" id="context-input" placeholder="e.g., Product page, Blog article, Social media post" 
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">AI Style</label>
+                        <select id="style-select" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                            <option value="concise">Concise (Short & Clear)</option>
+                            <option value="detailed">Detailed (Comprehensive)</option>
+                            <option value="technical">Technical (Precise)</option>
+                            <option value="creative">Creative (Descriptive)</option>
+                            <option value="seo">SEO Optimized</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Target Audience</label>
+                        <select id="audience-select" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 transition-all">
+                            <option value="general">General Audience</option>
+                            <option value="visually-impaired">Visually Impaired Users</option>
+                            <option value="children">Children</option>
+                            <option value="technical">Technical Audience</option>
+                        </select>
+                    </div>
+
+                    <button onclick="generateAltText()" id="generate-btn" disabled 
+                            class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none mb-6 flex items-center justify-center">
+                        <i class="fas fa-robot mr-2"></i>
+                        Generate Alt Text
+                    </button>
+
+                    <!-- AI Processing Indicator -->
+                    <div id="ai-processing" class="hidden mb-6 text-center">
+                        <div class="inline-flex items-center bg-blue-50 text-blue-700 px-4 py-3 rounded-lg">
+                            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700 mr-3"></div>
+                            AI is analyzing your image...
+                        </div>
+                    </div>
+
+                    <div id="generated-section" class="hidden">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Generated Alt Text</label>
+                        <textarea id="alt-text-output" rows="4" 
+                                  class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 transition-all mb-3"></textarea>
+                        
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-gray-600">Character count: <span id="char-count" class="font-semibold">0</span></span>
+                                <span class="text-sm text-gray-600">Word count: <span id="word-count" class="font-semibold">0</span></span>
+                                <span id="readability-score" class="text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full hidden">Readable</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="copyAltText()" class="px-4 py-2 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-700 transition-all flex items-center">
+                                    <i class="fas fa-copy mr-2"></i>
+                                    Copy
+                                </button>
+                                <button onclick="regenerateAltText()" class="px-4 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-all flex items-center">
+                                    <i class="fas fa-sync-alt mr-2"></i>
+                                    Regenerate
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quality Metrics -->
+                        <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-chart-line text-purple-600 mr-2"></i>
+                                Quality Metrics
+                            </h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">Clarity</span>
+                                        <span id="clarity-score" class="font-semibold">-</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="clarity-bar" class="score-bar bg-green-500 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">Conciseness</span>
+                                        <span id="concise-score" class="font-semibold">-</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="concise-bar" class="score-bar bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span class="text-gray-600">Accessibility</span>
+                                        <span id="access-score" class="font-semibold">-</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div id="access-bar" class="score-bar bg-purple-500 h-2 rounded-full" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Alternative Suggestions -->
+                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4">
+                            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                                Alternative Suggestions
+                            </h4>
+                            <div id="alt-suggestions" class="space-y-2">
+                                <!-- Alternative suggestions will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainer Tab -->
+        <div id="trainer-tab" class="hidden">
+            <div class="glass-effect rounded-2xl p-8 shadow-2xl max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-graduation-cap text-purple-600 mr-3"></i>
+                    Practice Writing Alt Text
+                </h2>
+                
+                <div class="mb-8">
+                    <div class="bg-gradient-to-r from-purple-100 to-indigo-100 rounded-xl p-6 mb-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-sm font-semibold text-purple-700 bg-purple-200 px-3 py-1 rounded-full">
+                                Exercise <span id="exercise-number">1</span>/5
+                            </span>
+                            <span class="text-sm text-gray-600">Difficulty: <span id="difficulty-level" class="font-semibold">Beginner</span></span>
+                        </div>
+                        <img id="practice-image" class="w-full rounded-lg shadow-lg mb-4" alt="Practice image">
+                        <div id="practice-context" class="text-sm text-gray-700 font-medium"></div>
+                    </div>
+
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Your Alt Text Description</label>
+                    <textarea id="practice-input" rows="4" placeholder="Write a descriptive alt text for this image..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 transition-all mb-4"></textarea>
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-sm text-gray-600">
+                            <span>Characters: <span id="practice-char-count">0</span></span>
+                            <span class="ml-4">Words: <span id="practice-word-count">0</span></span>
+                        </div>
+                        <button id="hint-btn" class="text-sm text-purple-600 font-semibold hover:text-purple-800 transition-all">
+                            <i class="fas fa-lightbulb mr-1"></i>Get a Hint
+                        </button>
+                    </div>
+                    
+                    <button onclick="submitPractice()" class="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105">
+                        Submit for Review
+                    </button>
+                </div>
+
+                <div id="feedback-section" class="hidden">
+                    <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
+                        <div class="flex items-center justify-center mb-6">
+                            <div class="relative">
+                                <svg class="w-32 h-32" viewBox="0 0 36 36">
+                                    <path class="text-gray-200" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"/>
+                                    <path id="overall-progress" class="text-purple-600" stroke-dasharray="0, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" stroke-width="3"/>
+                                    <text x="18" y="20.5" class="text-2xl font-bold" text-anchor="middle" fill="currentColor" id="overall-score">-</text>
+                                </svg>
+                            </div>
+                            <div class="ml-6">
+                                <div class="text-4xl font-bold text-purple-600" id="overall-score-text">-</div>
+                                <div class="text-lg text-gray-500">Overall Score</div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="metric-card bg-white rounded-lg p-4 text-center shadow-sm">
+                                <div class="text-sm text-gray-600 mb-1 font-medium">Descriptiveness</div>
+                                <div class="score-display text-2xl font-bold text-blue-600" id="desc-score">-</div>
+                            </div>
+                            <div class="metric-card bg-white rounded-lg p-4 text-center shadow-sm">
+                                <div class="text-sm text-gray-600 mb-1 font-medium">Conciseness</div>
+                                <div class="score-display text-2xl font-bold text-green-600" id="conc-score">-</div>
+                            </div>
+                            <div class="metric-card bg-white rounded-lg p-4 text-center shadow-sm">
+                                <div class="text-sm text-gray-600 mb-1 font-medium">Accuracy</div>
+                                <div class="score-display text-2xl font-bold text-purple-600" id="acc-score">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl p-6 mb-6">
+                        <h4 class="font-bold text-gray-800 mb-3 flex items-center">
+                            <i class="fas fa-comment-dots text-blue-500 mr-2"></i>
+                            Feedback & Suggestions
+                        </h4>
+                        <div id="feedback-text" class="text-gray-700 space-y-2"></div>
+                    </div>
+
+                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6">
+                        <h4 class="font-bold text-gray-800 mb-3">Suggested Alt Text</h4>
+                        <p id="suggested-alt" class="text-gray-700 italic"></p>
+                    </div>
+
+                    <div class="flex space-x-4 mt-6">
+                        <button onclick="previousPractice()" id="prev-btn" class="flex-1 py-4 bg-gray-300 text-gray-700 rounded-xl font-bold text-lg hover:bg-gray-400 transition-all">
+                            <i class="fas fa-arrow-left mr-2"></i>Previous
+                        </button>
+                        <button onclick="nextPractice()" class="flex-1 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all">
+                            Next Exercise<i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="hidden">
+            <div class="glass-effect rounded-2xl p-8 shadow-2xl max-w-5xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center">
+                    <i class="fas fa-chart-bar text-purple-600 mr-3"></i>
+                    Performance Analytics
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="metric-card bg-white rounded-xl p-6 text-center shadow-lg">
+                        <div class="text-4xl font-bold text-purple-600 mb-2">87%</div>
+                        <div class="text-gray-600">Average Alt Text Score</div>
+                        <div class="mt-4 h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-purple-600 rounded-full" style="width: 87%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card bg-white rounded-xl p-6 text-center shadow-lg">
+                        <div class="text-4xl font-bold text-blue-600 mb-2">124</div>
+                        <div class="text-gray-600">Images Processed</div>
+                        <div class="mt-4 h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-blue-600 rounded-full" style="width: 62%"></div>
+                        </div>
+                    </div>
+                    <div class="metric-card bg-white rounded-xl p-6 text-center shadow-lg">
+                        <div class="text-4xl font-bold text-green-600 mb-2">92%</div>
+                        <div class="text-gray-600">Accessibility Compliance</div>
+                        <div class="mt-4 h-2 bg-gray-200 rounded-full">
+                            <div class="h-2 bg-green-600 rounded-full" style="width: 92%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                        <h3 class="font-bold text-gray-800 mb-4">Score Distribution</h3>
+                        <canvas id="scoreChart" height="250"></canvas>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                        <h3 class="font-bold text-gray-800 mb-4">Improvement Over Time</h3>
+                        <canvas id="improvementChart" height="250"></canvas>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <h3 class="font-bold text-gray-800 mb-4">Common Issues Identified</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">Too verbose descriptions</span>
+                            <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                                <div class="h-2 bg-red-500 rounded-full" style="width: 65%"></div>
+                            </div>
+                            <span class="text-gray-600 font-semibold">65%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">Missing key details</span>
+                            <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                                <div class="h-2 bg-yellow-500 rounded-full" style="width: 42%"></div>
+                            </div>
+                            <span class="text-gray-600 font-semibold">42%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">Starting with "image of"</span>
+                            <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                                <div class="h-2 bg-blue-500 rounded-full" style="width: 38%"></div>
+                            </div>
+                            <span class="text-gray-600 font-semibold">38%</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-700">Not considering context</span>
+                            <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                                <div class="h-2 bg-purple-500 rounded-full" style="width: 29%"></div>
+                            </div>
+                            <span class="text-gray-600 font-semibold">29%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Practices Tab -->
+        <div id="guide-tab" class="hidden">
+            <div class="glass-effect rounded-2xl p-8 shadow-2xl max-w-5xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 mb-8 text-center">Alt Text Best Practices</h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="best-practice-card bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-green-100 rounded-lg p-3 mr-4">
+                                <i class="fas fa-check text-green-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Be Concise</h3>
+                                <p class="text-gray-600 text-sm">Keep descriptions under 125 characters when possible. Focus on the essential information.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="best-practice-card bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3 mr-4">
+                                <i class="fas fa-bullseye text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Be Specific</h3>
+                                <p class="text-gray-600 text-sm">Avoid vague terms like "image" or "picture". Describe what's actually in the image.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="best-practice-card bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3 mr-4">
+                                <i class="fas fa-sitemap text-purple-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Context Matters</h3>
+                                <p class="text-gray-600 text-sm">Consider the image's purpose. A product photo needs different details than a decorative image.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="best-practice-card bg-white rounded-xl p-6 shadow-lg">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0 bg-yellow-100 rounded-lg p-3 mr-4">
+                                <i class="fas fa-ban text-yellow-600"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-gray-800 mb-2">Avoid Redundancy</h3>
+                                <p class="text-gray-600 text-sm">Don't start with "image of" or "picture of". Screen readers already announce it's an image.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-6 mb-6">
+                    <h3 class="font-bold text-gray-800 mb-4">Examples: Good vs. Bad</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="example-box bg-white rounded-lg p-4">
+                            <div class="flex items-start mb-2">
+                                <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded mr-3">BAD</span>
+                                <p class="text-gray-700">"Image of a dog"</p>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded mr-3">GOOD</span>
+                                <p class="text-gray-700">"Golden retriever puppy playing with a red ball on grass"</p>
+                            </div>
+                        </div>
+
+                        <div class="example-box bg-white rounded-lg p-4">
+                            <div class="flex items-start mb-2">
+                                <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded mr-3">BAD</span>
+                                <p class="text-gray-700">"Picture of food on a table"</p>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded mr-3">GOOD</span>
+                                <p class="text-gray-700">"Caesar salad with grilled chicken, parmesan, and croutons"</p>
+                            </div>
+                        </div>
+
+                        <div class="example-box bg-white rounded-lg p-4">
+                            <div class="flex items-start mb-2">
+                                <span class="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded mr-3">BAD</span>
+                                <p class="text-gray-700">"A person working"</p>
+                            </div>
+                            <div class="flex items-start">
+                                <span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded mr-3">GOOD</span>
+                                <p class="text-gray-700">"Woman typing on laptop at a modern office desk with plants"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6">
+                    <h3 class="font-bold text-gray-800 mb-4">Key Principles</h3>
+                    <ul class="space-y-3 text-gray-700">
+                        <li class="flex items-start">
+                            <span class="text-purple-600 mr-3 mt-1">•</span>
+                            <span><strong>Prioritize content:</strong> Describe what matters most for understanding the image's purpose</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-600 mr-3 mt-1">•</span>
+                            <span><strong>Use plain language:</strong> Avoid jargon unless it's necessary and your audience understands it</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-600 mr-3 mt-1">•</span>
+                            <span><strong>Consider emotion:</strong> For artistic or emotional content, describe the mood or feeling</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-600 mr-3 mt-1">•</span>
+                            <span><strong>Include text:</strong> If the image contains important text, include it in the alt text</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-purple-600 mr-3 mt-1">•</span>
+                            <span><strong>Decorative images:</strong> Use empty alt text (alt="") for purely decorative images</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let currentImage = null;
+        let currentAltText = '';
+        let practiceImages = [
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0ZGRUJFRSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjE1MCIgcj0iODAiIGZpbGw9IiNGRjg4NzgiLz48Y2lyY2xlIGN4PSIyNzAiIGN5PSIxMzAiIHI9IjEwIiBmaWxsPSIjMzMzIi8+PGNpcmNsZSBjeD0iMzMwIiBjeT0iMTMwIiByPSIxMCIgZmlsbD0iIzMzMyIvPjxwYXRoIGQ9Ik0gMjYwIDE4MCBRIDMwMCAyMTAsIDM0MCAxODAiIHN0cm9rZT0iIzMzMyIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PHJlY3QgeD0iMjAwIiB5PSIyNTAiIHdpZHRoPSIyMDAiIGhlaWdodD0iMTIwIiByeD0iMTAiIGZpbGw9IiNGRjY2NTAiLz48dGV4dCB4PSIzMDAiIHk9IjMyMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjM2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiPjUwJTwvdGV4dD48L3N2Zz4=',
+                context: 'E-commerce sale banner',
+                ideal: 'Smiling emoji face above red sale tag displaying 50% discount',
+                difficulty: 'beginner'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzg3Q0VFQiIvPjxjaXJjbGUgY3g9IjE1MCIgY3k9IjEwMCIgcj0iNDAiIGZpbGw9IiNGRkQ3MDAiLz48cGF0aCBkPSJNIDAgMzAwIFEgMTUwIDI1MCwgMzAwIDMwMCBUICA2MDAgMzAwIEwgNjAwIDQwMCBMIDAgNDAwIFoiIGZpbGw9IiM4QkMyNkEiLz48cGF0aCBkPSJNIDIwMCAyMDAgTCAyNTAgMzAwIEwgMTUwIDMwMCBaIiBmaWxsPSIjMkU3RDMyIi8+PHBhdGggZD0iTSA0MDAgMTgwIEwgNDUwIDI4MCBMIDM1MCAyODAgWiIgZmlsbD0iIzJFN0QzMiIvPjwvc3ZnPg==',
+                context: 'Nature blog post header',
+                ideal: 'Scenic landscape with mountains under blue sky with sun',
+                difficulty: 'intermediate'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0Y1RjVGNSIvPjxyZWN0IHg9IjE1MCIgeT0iMTAwIiB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMzMzMyIgcng9IjEwIi8+PHJlY3QgeD0iMTcwIiB5PSIxMjAiIHdpZHRoPSIyNjAiIGhlaWdodD0iMTQwIiBmaWxsPSIjNEE5MEUyIi8+PGNpcmNsZSBjeD0iMzAwIiBjeT0iMjcwIiByPSIxNSIgZmlsbD0iI0ZGRiIvPjwvc3ZnPg==',
+                context: 'Tech product page',
+                ideal: 'Modern laptop computer with blue screen display on light gray surface',
+                difficulty: 'intermediate'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0ZGRiIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjIwMCIgcj0iODAiIGZpbGw9IiNGRkNDMDAiLz48cmVjdCB4PSIyMDAiIHk9IjEyMCIgd2lkdGg9IjIwMCIgaGVpZ2h0PSI2MCIgZmlsbD0iI0ZGNjY1MCIgcng9IjMwIi8+PHJlY3QgeD0iMjIwIiB5PSIxNDAiIHdpZHRoPSIxNjAiIGhlaWdodD0iMjAiIGZpbGw9IiNGRkZGRkYiLz48L3N2Zz4=',
+                context: 'Food blog recipe',
+                ideal: 'Freshly baked chocolate chip cookie on a white plate',
+                difficulty: 'beginner'
+            },
+            {
+                url: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzAwN0ZGNSIvPjxjaXJjbGUgY3g9IjMwMCIgY3k9IjE1MCIgcj0iNjAiIGZpbGw9IiNGRkZGRkYiLz48cGF0aCBkPSJNIDI0MCAxMDAgTCAzNjAgMTAwIEwgMzYwIDIwMCBMIDI0MCAyMDAgWiIgZmlsbD0iI0ZGRkZGRiIvPjxwYXRoIGQ9Ik0gMjYwIDEyMCBRIDI2MCAxNjAsIDMwMCAxNjAgUSA0NDAgMTYwLCA0NDAgMTIwIiBzdHJva2U9IiMwMDdGRjUiIHN0cm9rZS13aWR0aD0iMjAiIGZpbGw9Im5vbmUiLz48L3N2Zz4=',
+                context: 'Sports equipment website',
+                ideal: 'Soccer ball on a green field with goalposts in the background',
+                difficulty: 'advanced'
+            }
+        ];
+        let currentPracticeIndex = 0;
+        let analyticsData = {
+            scores: [65, 72, 78, 85, 82, 88, 90, 87, 92, 89],
+            issues: {
+                verbose: 65,
+                missingDetails: 42,
+                imageOf: 38,
+                context: 29
+            }
+        };
+
+        // Initialize charts
+        function initializeCharts() {
+            // Score distribution chart
+            const scoreCtx = document.getElementById('scoreChart').getContext('2d');
+            new Chart(scoreCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Poor (0-60)', 'Fair (61-70)', 'Good (71-80)', 'Very Good (81-90)', 'Excellent (91-100)'],
+                    datasets: [{
+                        data: [5, 15, 30, 35, 15],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#10b981',
+                            '#3b82f6',
+                            '#8b5cf6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Improvement chart
+            const improvementCtx = document.getElementById('improvementChart').getContext('2d');
+            new Chart(improvementCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6', 'Week 7', 'Week 8', 'Week 9', 'Week 10'],
+                    datasets: [{
+                        label: 'Average Score',
+                        data: analyticsData.scores,
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            min: 50,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            document.getElementById('generator-tab').classList.add('hidden');
+            document.getElementById('trainer-tab').classList.add('hidden');
+            document.getElementById('analytics-tab').classList.add('hidden');
+            document.getElementById('guide-tab').classList.add('hidden');
+            
+            document.getElementById('tab-generator').classList.remove('active');
+            document.getElementById('tab-trainer').classList.remove('active');
+            document.getElementById('tab-analytics').classList.remove('active');
+            document.getElementById('tab-guide').classList.remove('active');
+            
+            document.getElementById(tab + '-tab').classList.remove('hidden');
+            document.getElementById('tab-' + tab).classList.add('active');
+            
+            if (tab === 'trainer') {
+                loadPracticeImage();
+            } else if (tab === 'analytics') {
+                initializeCharts();
+            }
+        }
+
+        // Upload zone functionality
+        const uploadZone = document.getElementById('upload-zone');
+        const imageInput = document.getElementById('image-input');
+
+        uploadZone.addEventListener('click', () => imageInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                loadImage(file);
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                loadImage(file);
+            }
+        });
+
+        function loadImage(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                const preview = document.getElementById('image-preview');
+                preview.src = currentImage;
+                
+                document.getElementById('upload-zone').classList.add('hidden');
+                document.getElementById('preview-container').classList.remove('hidden');
+                document.getElementById('analysis-section').classList.remove('hidden');
+                document.getElementById('generate-btn').disabled = false;
+                
+                // Get image info
+                const img = new Image();
+                img.onload = () => {
+                    document.getElementById('img-dimensions').textContent = `${img.width} × ${img.height}px`;
+                    extractColorPalette(img);
+                };
+                img.src = currentImage;
+                
+                document.getElementById('img-size').textContent = formatFileSize(file.size);
+                document.getElementById('img-format').textContent = file.type.split('/')[1].toUpperCase();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function extractColorPalette(img) {
+            // Simplified color extraction - in a real app, you would use a more sophisticated algorithm
+            const paletteContainer = document.getElementById('color-palette');
+            paletteContainer.innerHTML = '';
+            
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
+            
+            colors.forEach(color => {
+                const colorDot = document.createElement('div');
+                colorDot.className = 'w-4 h-4 rounded-full';
+                colorDot.style.backgroundColor = color;
+                paletteContainer.appendChild(colorDot);
+            });
+        }
+
+        function removeImage() {
+            currentImage = null;
+            document.getElementById('upload-zone').classList.remove('hidden');
+            document.getElementById('preview-container').classList.add('hidden');
+            document.getElementById('analysis-section').classList.add('hidden');
+            document.getElementById('generated-section').classList.add('hidden');
+            document.getElementById('generate-btn').disabled = true;
+            imageInput.value = '';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+
+        // Generate alt text
+        function generateAltText() {
+            const context = document.getElementById('context-input').value;
+            const style = document.getElementById('style-select').value;
+            const audience = document.getElementById('audience-select').value;
+            
+            // Show AI processing indicator
+            document.getElementById('ai-processing').classList.remove('hidden');
+            document.getElementById('generate-btn').disabled = true;
+            
+            // Simulate AI processing with a delay
+            setTimeout(() => {
+                document.getElementById('ai-processing').classList.add('hidden');
+                document.getElementById('generate-btn').disabled = false;
+                
+                // Simulate AI generation with realistic examples based on style and audience
+                const samples = {
+                    concise: {
+                        general: [
+                            'Professional workspace with laptop and coffee',
+                            'Team meeting in modern conference room',
+                            'City skyline at sunset',
+                            'Fresh vegetables on wooden cutting board'
+                        ],
+                        'visually-impaired': [
+                            'A person sitting at a desk with a laptop and a cup of coffee',
+                            'A group of people gathered around a conference table',
+                            'A city skyline against a colorful sunset sky',
+                            'An assortment of fresh vegetables on a cutting board'
+                        ],
+                        children: [
+                            'A happy person working on a computer with a drink',
+                            'Friends talking together in a bright room',
+                            'Tall buildings with pretty colors in the sky',
+                            'Colorful veggies ready for cooking'
+                        ],
+                        technical: [
+                            'Workspace with laptop and peripherals',
+                            'Business team in meeting environment',
+                            'Urban landscape during golden hour',
+                            'Produce assortment on food preparation surface'
+                        ]
+                    },
+                    detailed: {
+                        general: [
+                            'Bright modern office workspace featuring an open laptop displaying data charts, white ceramic coffee cup, wireless mouse, and potted succulent plant on a light oak desk near a window',
+                            'Diverse team of five professionals collaborating around a glass conference table in a contemporary meeting room with whiteboard, digital screen, and natural lighting from floor-to-ceiling windows',
+                            'Urban city skyline silhouetted against vibrant orange and pink sunset sky with scattered clouds, tall buildings reflecting golden light',
+                            'Assortment of fresh organic vegetables including red tomatoes, green bell peppers, purple eggplant, and leafy herbs arranged on rustic wooden cutting board'
+                        ],
+                        'visually-impaired': [
+                            'A person sitting at a modern desk with an open laptop computer, a white coffee mug to the right, and a small green plant in a pot nearby',
+                            'A group of five adults, including three women and two men, sitting around a large glass table in a bright conference room with a whiteboard on the wall',
+                            'A cityscape showing multiple tall buildings against a sky filled with shades of orange, pink, and purple as the sun sets behind them',
+                            'A collection of fresh vegetables including round red tomatoes, long green peppers, dark purple eggplants, and green leafy herbs placed on a wooden cutting board'
+                        ],
+                        children: [
+                            'A sunny workspace with a computer, a drink, and a cute little plant on a wooden desk',
+                            'A group of grown-ups having a meeting around a shiny table in a bright room with big windows',
+                            'Lots of tall buildings with windows, with a beautiful colorful sky behind them as the sun goes down',
+                            'Different colored vegetables like red tomatoes, green peppers, and purple eggplants sitting on a brown cutting board'
+                        ],
+                        technical: [
+                            'Contemporary workstation configuration comprising laptop computer, peripheral devices, and beverage container on light-toned wooden surface',
+                            'Corporate team engagement scenario in modern conference facility with collaborative technology infrastructure and ambient illumination',
+                            'Metropolitan architectural panorama during crepuscular period with atmospheric optical phenomena and structural reflective properties',
+                            'Agricultural product display featuring solanaceous fruits, capsicum varieties, and aromatic foliage on food preparation implement'
+                        ]
+                    },
+                    technical: {
+                        general: [
+                            'MacBook Pro 16-inch displaying financial dashboard with multiple data visualization widgets on desk with peripherals',
+                            'Six-person business meeting setup with video conferencing equipment and presentation display in glass-walled conference room',
+                            'Metropolitan skyline photograph taken during golden hour showing commercial high-rise buildings against horizon',
+                            'Raw ingredient composition showing Solanaceae family vegetables and Capsicum species on hardwood surface'
+                        ],
+                        'visually-impaired': [
+                            'A silver laptop computer with a 16-inch screen showing colorful charts and graphs, positioned on a wooden desk with other office items',
+                            'A modern conference room with a large glass table, six office chairs, video conferencing equipment, and a presentation screen on the wall',
+                            'A photograph of a city with many tall buildings, taken when the sun is low in the sky creating warm lighting conditions',
+                            'A selection of raw vegetables from the nightshade family including tomatoes and peppers, arranged on a cutting board made of wood'
+                        ],
+                        children: [
+                            'A silver computer on a desk showing colorful graphs and charts',
+                            'A big room with a clear table and six chairs, with cameras and screens for meetings',
+                            'A picture of a city with very tall buildings when the sun is setting',
+                            'Different kinds of vegetables from the same plant family on a wooden board'
+                        ],
+                        technical: [
+                            'Apple MacBook Pro 16-inch (2023) running data visualization software, peripheral accessories including Magic Mouse 2',
+                            'Conference room configuration: 6x ergonomic chairs, glass-top table, 85" 4K display, integrated AV system',
+                            'Urban architectural photography: skyscraper silhouettes, golden hour lighting, 24mm focal length',
+                            'Culinary ingredient array: Solanum lycopersicum, Capsicum annuum, Solanum melongena on Fagus sylvatica surface'
+                        ]
+                    },
+                    creative: {
+                        general: [
+                            'Serene workspace bathed in natural light where productivity meets comfort, with a laptop serving as the gateway to digital creativity',
+                            'Collaborative energy fills the space as minds converge around the table, ideas flowing freely in this hub of innovation',
+                            'The city breathes its evening glow, towers reaching skyward as daylight surrenders to the approaching night',
+                            'Nature\'s vibrant palette arranged in a rustic still life, each vegetable a testament to earth\'s bounty'
+                        ],
+                        'visually-impaired': [
+                            'A peaceful workspace filled with natural light, featuring a laptop computer that appears to be the center of creative activity',
+                            'A room filled with the energy of collaboration as people gather around a table, sharing ideas in a modern meeting space',
+                            'The evening transforms the cityscape as buildings stand tall against a sky changing from day to night with beautiful colors',
+                            'A colorful collection of fresh vegetables arranged artistically on a wooden surface, showcasing the diversity of nature\'s offerings'
+                        ],
+                        children: [
+                            'A happy, sunny spot for working with a computer that helps people create amazing things',
+                            'A special room where friends work together around a big table, sharing their cool ideas',
+                            'The city looks like a magical place when the sun goes down, with buildings that seem to touch the colorful sky',
+                            'Pretty vegetables in different colors and shapes, all waiting to become part of a delicious meal'
+                        ],
+                        technical: [
+                            'Ergonomic digital workstation illuminated by diurnal photonic radiation, facilitating cognitive processes through computational interface',
+                            'Synergistic intellectual convergence within architectural enclosure, facilitating ideation through interpersonal discourse',
+                            'Urban topography during crepuscular transition, architectural forms punctuating chromatic atmospheric phenomena',
+                            'Botanical specimen arrangement demonstrating phytochemical pigmentation diversity on lignocellulosic substrate'
+                        ]
+                    },
+                    seo: {
+                        general: [
+                            'Modern home office setup with laptop and coffee for productive remote work',
+                            'Business team collaboration in contemporary conference room meeting',
+                            'Beautiful city skyline at sunset urban landscape photography',
+                            'Fresh healthy vegetables on wooden cutting board for cooking'
+                        ],
+                        'visually-impaired': [
+                            'Accessible home office workspace with laptop computer and coffee mug for remote work',
+                            'Business professionals having a collaborative meeting in a modern conference room',
+                            'Urban city skyline during sunset with tall buildings and colorful sky',
+                            'Fresh healthy vegetables arranged on a wooden cutting board for meal preparation'
+                        ],
+                        children: [
+                            'Fun workspace for kids with computer and drink for learning activities',
+                            'Group of people working together in a bright meeting room',
+                            'Pretty city buildings with colorful sunset sky in the background',
+                            'Colorful fresh vegetables on a wooden board for healthy eating'
+                        ],
+                        technical: [
+                            'Optimal remote work setup with laptop computer and ergonomic accessories',
+                            'Efficient business collaboration in technology-enabled conference environment',
+                            'Premium urban landscape photography featuring metropolitan skyline at golden hour',
+                            'Nutritional whole food ingredients prepared on sustainable wooden surface'
+                        ]
+                    }
+                };
+                
+                const styleSamples = samples[style] || samples['concise'];
+                const audienceSamples = styleSamples[audience] || styleSamples['general'];
+                const randomSample = audienceSamples[Math.floor(Math.random() * audienceSamples.length)];
+                
+                let altText = randomSample;
+                if (context) {
+                    altText = `${randomSample} - ${context}`;
+                }
+                
+                currentAltText = altText;
+                document.getElementById('alt-text-output').value = altText;
+                document.getElementById('generated-section').classList.remove('hidden');
+                updateCharCount();
+                calculateQualityMetrics(altText);
+                generateAlternativeSuggestions(altText, style, audience);
+            }, 2000);
+        }
+
+        function regenerateAltText() {
+            generateAltText();
+        }
+
+        function generateAlternativeSuggestions(baseAlt, style, audience) {
+            const suggestionsContainer = document.getElementById('alt-suggestions');
+            suggestionsContainer.innerHTML = '';
+            
+            // Generate 3 alternative suggestions based on the base alt text
+            const alternatives = [
+                baseAlt.replace(/\b(\w+)\b/g, (match) => {
+                    // Simple variation by occasionally replacing words with synonyms
+                    const synonyms = {
+                        'modern': 'contemporary',
+                        'professional': 'business',
+                        'workspace': 'work area',
+                        'laptop': 'computer',
+                        'coffee': 'beverage',
+                        'team': 'group',
+                        'meeting': 'discussion',
+                        'city': 'urban',
+                        'skyline': 'view',
+                        'sunset': 'dusk',
+                        'fresh': 'raw',
+                        'vegetables': 'produce',
+                        'wooden': 'wood',
+                        'cutting board': 'chopping block'
+                    };
+                    
+                    return Math.random() > 0.7 && synonyms[match.toLowerCase()] ? synonyms[match.toLowerCase()] : match;
+                }),
+                
+                baseAlt.split(' ').slice(0, 8).join(' ') + '...',
+                
+                baseAlt.replace(/\b(\w+)\b/g, (match, p1) => {
+                    // Add adjectives for more descriptive version
+                    const adjectives = {
+                        'workspace': 'organized',
+                        'laptop': 'sleek',
+                        'coffee': 'steaming',
+                        'team': 'diverse',
+                        'meeting': 'productive',
+                        'city': 'bustling',
+                        'skyline': 'impressive',
+                        'sunset': 'vibrant',
+                        'vegetables': 'colorful',
+                        'cutting board': 'sturdy'
+                    };
+                    
+                    return adjectives[match.toLowerCase()] ? `${adjectives[match.toLowerCase()]} ${match}` : match;
+                }).replace(/\b(\w+ \w+)\b/g, (match) => {
+                    // Limit the effect to not make it too long
+                    return Math.random() > 0.5 ? match : match.split(' ')[1];
+                })
+            ];
+            
+            // Remove duplicates
+            const uniqueAlternatives = [...new Set(alternatives)];
+            
+            uniqueAlternatives.forEach((alt, index) => {
+                const suggestionDiv = document.createElement('div');
+                suggestionDiv.className = 'flex items-start p-2 hover:bg-white/50 rounded transition-all cursor-pointer';
+                suggestionDiv.innerHTML = `
+                    <div class="flex-shrink-0 w-6 h-6 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-xs font-bold mt-1 mr-2">
+                        ${index + 1}
+                    </div>
+                    <div class="flex-1">
+                        <div class="text-sm">${alt}</div>
+                        <div class="text-xs text-gray-500 mt-1">${getSuggestionType(index)}</div>
+                    </div>
+                    <button onclick="useSuggestion('${alt.replace(/'/g, "\\'")}')" class="text-purple-600 hover:text-purple-800 ml-2">
+                        <i class="fas fa-check"></i>
+                    </button>
+                `;
+                suggestionsContainer.appendChild(suggestionDiv);
+            });
+        }
+
+        function getSuggestionType(index) {
+            const types = ['More descriptive', 'More concise', 'Alternative phrasing'];
+            return types[index] || 'Alternative';
+        }
+
+        function useSuggestion(altText) {
+            document.getElementById('alt-text-output').value = altText;
+            currentAltText = altText;
+            updateCharCount();
+            calculateQualityMetrics(altText);
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('alt-text-output').value;
+            const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            
+            document.getElementById('char-count').textContent = text.length;
+            document.getElementById('word-count').textContent = wordCount;
+            
+            // Update practice counts if on trainer tab
+            if (document.getElementById('practice-input')) {
+                document.getElementById('practice-char-count').textContent = document.getElementById('practice-input').value.length;
+                document.getElementById('practice-word-count').textContent = document.getElementById('practice-input').value.trim() === '' ? 0 : document.getElementById('practice-input').value.trim().split(/\s+/).length;
+            }
+            
+            // Show readability indicator
+            const readabilityEl = document.getElementById('readability-score');
+            if (text.length > 0) {
+                readabilityEl.classList.remove('hidden');
+                if (text.length <= 125) {
+                    readabilityEl.textContent = 'Good Length';
+                    readabilityEl.className = 'text-sm px-2 py-1 bg-green-100 text-green-800 rounded-full';
+                } else if (text.length <= 200) {
+                    readabilityEl.textContent = 'A Bit Long';
+                    readabilityEl.className = 'text-sm px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full';
+                } else {
+                    readabilityEl.textContent = 'Too Long';
+                    readabilityEl.className = 'text-sm px-2 py-1 bg-red-100 text-red-800 rounded-full';
+                }
+            } else {
+                readabilityEl.classList.add('hidden');
+            }
+            
+            // Auto-update metrics when editing
+            if (text) {
+                calculateQualityMetrics(text);
+            }
+        }
+
+        document.getElementById('alt-text-output').addEventListener('input', updateCharCount);
+        if (document.getElementById('practice-input')) {
+            document.getElementById('practice-input').addEventListener('input', updateCharCount);
+        }
+
+        function calculateQualityMetrics(text) {
+            const length = text.length;
+            const words = text.trim().split(/\s+/).length;
+            
+            // Clarity score (based on specific words and structure)
+            let clarityScore = 70;
+            if (words >= 5) clarityScore += 10;
+            if (text.includes(',')) clarityScore += 5;
+            if (!/^(image|picture|photo) of/i.test(text)) clarityScore += 15;
+            clarityScore = Math.min(100, clarityScore);
+            
+            // Conciseness score (optimal 80-125 characters)
+            let conciseScore = 100;
+            if (length > 125) conciseScore = Math.max(50, 100 - (length - 125) / 2);
+            if (length < 40) conciseScore = Math.max(60, length * 2);
+            
+            // Accessibility score
+            let accessScore = 75;
+            if (length <= 125) accessScore += 15;
+            if (words >= 4 && words <= 20) accessScore += 10;
+            accessScore = Math.min(100, accessScore);
+            
+            animateScore('clarity', clarityScore);
+            animateScore('concise', conciseScore);
+            animateScore('access', accessScore);
+        }
+
+        function animateScore(metric, score) {
+            const scoreEl = document.getElementById(metric + '-score');
+            const barEl = document.getElementById(metric + '-bar');
+            
+            scoreEl.textContent = Math.round(score) + '/100';
+            setTimeout(() => {
+                barEl.style.width = score + '%';
+            }, 100);
+        }
+
+        function copyAltText() {
+            const text = document.getElementById('alt-text-output').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.innerHTML = '<i class="fas fa-check mr-2"></i>Copied!';
+                btn.classList.add('bg-green-600');
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fas fa-copy mr-2"></i>Copy';
+                    btn.classList.remove('bg-green-600');
+                }, 2000);
+            });
+        }
+
+        // Trainer functionality
+        function loadPracticeImage() {
+            const practice = practiceImages[currentPracticeIndex];
+            document.getElementById('practice-image').src = practice.url;
+            document.getElementById('practice-context').textContent = `Context: ${practice.context}`;
+            document.getElementById('practice-input').value = '';
+            document.getElementById('feedback-section').classList.add('hidden');
+            document.getElementById('exercise-number').textContent = currentPracticeIndex + 1;
+            document.getElementById('difficulty-level').textContent = practice.difficulty.charAt(0).toUpperCase() + practice.difficulty.slice(1);
+            
+            // Update previous button state
+            document.getElementById('prev-btn').disabled = currentPracticeIndex === 0;
+        }
+
+        function submitPractice() {
+            const userAlt = document.getElementById('practice-input').value.trim();
+            
+            if (!userAlt) {
+                alert('Please write an alt text description first!');
+                return;
+            }
+            
+            const practice = practiceImages[currentPracticeIndex];
+            const ideal = practice.ideal;
+            
+            // Calculate scores
+            const descScore = calculateDescriptiveness(userAlt, ideal);
+            const concScore = calculateConciseness(userAlt);
+            const accScore = calculateAccuracy(userAlt, ideal);
+            const overall = Math.round((descScore + concScore + accScore) / 3);
+            
+            // Display scores
+            document.getElementById('overall-score').textContent = overall;
+            document.getElementById('overall-score-text').textContent = overall;
+            document.getElementById('desc-score').textContent = descScore;
+            document.getElementById('conc-score').textContent = concScore;
+            document.getElementById('acc-score').textContent = accScore;
+            
+            // Animate progress circle
+            const progressCircle = document.getElementById('overall-progress');
+            const circumference = 2 * Math.PI * 15.9155;
+            const offset = circumference - (overall / 100) * circumference;
+            progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+            progressCircle.style.strokeDashoffset = offset;
+            
+            // Generate feedback
+            const feedback = generateFeedback(userAlt, ideal, descScore, concScore, accScore);
+            document.getElementById('feedback-text').innerHTML = feedback;
+            document.getElementById('suggested-alt').textContent = ideal;
+            
+            document.getElementById('feedback-section').classList.remove('hidden');
+            document.getElementById('feedback-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function calculateDescriptiveness(user, ideal) {
+            const userWords = new Set(user.toLowerCase().split(/\s+/));
+            const idealWords = new Set(ideal.toLowerCase().split(/\s+/));
+            
+            let matches = 0;
+            idealWords.forEach(word => {
+                if (userWords.has(word) && word.length > 3) matches++;
+            });
+            
+            const wordCount = user.split(/\s+/).length;
+            let score = Math.min(100, (matches / Math.max(idealWords.size, 1)) * 100);
+            
+            if (wordCount < 4) score -= 20;
+            if (wordCount > 25) score -= 10;
+            
+            return Math.max(0, Math.round(score));
+        }
+
+        function calculateConciseness(text) {
+            const length = text.length;
+            const words = text.trim().split(/\s+/).length;
+            
+            let score = 100;
+            
+            if (length > 125) score = Math.max(50, 100 - (length - 125) / 2);
+            if (length < 30) score -= 20;
+            if (words < 4) score -= 25;
+            if (words > 25) score -= 15;
+            
+            // Check for redundant phrases
+            if (/^(image|picture|photo) (of|showing)/i.test(text)) score -= 15;
+            
+            return Math.max(0, Math.round(score));
+        }
+
+        function calculateAccuracy(user, ideal) {
+            const userLower = user.toLowerCase();
+            const idealLower = ideal.toLowerCase();
+            
+            // Extract key concepts
+            const extractConcepts = (text) => {
+                const words = text.split(/\s+/);
+                return words.filter(w => w.length > 4);
+            };
+            
+            const userConcepts = extractConcepts(userLower);
+            const idealConcepts = extractConcepts(idealLower);
+            
+            let matches = 0;
+            idealConcepts.forEach(concept => {
+                if (userConcepts.some(uc => uc.includes(concept) || concept.includes(uc))) {
+                    matches++;
+                }
+            });
+            
+            return Math.min(100, Math.round((matches / Math.max(idealConcepts.length, 1)) * 120));
+        }
+
+        function generateFeedback(user, ideal, desc, conc, acc) {
+            const feedback = [];
+            
+            if (desc < 70) {
+                feedback.push('<p class="feedback-item text-red-600">• <strong>Descriptiveness:</strong> Add more specific details about what you see in the image. Consider colors, objects, actions, and context.</p>');
+            } else if (desc >= 85) {
+                feedback.push('<p class="feedback-item text-green-600">• <strong>Descriptiveness:</strong> Excellent! Your description captures the key elements effectively.</p>');
+            }
+            
+            if (conc < 70) {
+                if (user.length > 125) {
+                    feedback.push('<p class="feedback-item text-orange-600">• <strong>Conciseness:</strong> Try to shorten your description. Aim for under 125 characters while keeping key information.</p>');
+                } else {
+                    feedback.push('<p class="feedback-item text-orange-600">• <strong>Conciseness:</strong> Your description could be more substantial. Add a few more specific details.</p>');
+                }
+            } else if (conc >= 85) {
+                feedback.push('<p class="feedback-item text-green-600">• <strong>Conciseness:</strong> Great balance between detail and brevity!</p>');
+            }
+            
+            if (acc < 70) {
+                feedback.push('<p class="feedback-item text-red-600">• <strong>Accuracy:</strong> Some key elements are missing or described differently. Review the image more carefully.</p>');
+            } else if (acc >= 85) {
+                feedback.push('<p class="feedback-item text-green-600">• <strong>Accuracy:</strong> Your description accurately represents the image content!</p>');
+            }
+            
+            if (/^(image|picture|photo) (of|showing)/i.test(user)) {
+                feedback.push('<p class="feedback-item text-blue-600">• <strong>Tip:</strong> Avoid starting with "image of" or "picture of" - screen readers already announce it\'s an image.</p>');
+            }
+            
+            if (feedback.length === 0) {
+                feedback.push('<p class="feedback-item text-green-600">• Outstanding work! Your alt text follows best practices and effectively describes the image.</p>');
+            }
+            
+            return feedback.join('');
+        }
+
+        function nextPractice() {
+            currentPracticeIndex = (currentPracticeIndex + 1) % practiceImages.length;
+            loadPracticeImage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function previousPractice() {
+            if (currentPracticeIndex > 0) {
+                currentPracticeIndex--;
+                loadPracticeImage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        // Theme toggle
+        document.getElementById('theme-toggle').addEventListener('click', function() {
+            document.body.classList.toggle('dark-mode');
+            const icon = this.querySelector('i');
+            if (document.body.classList.contains('dark-mode')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+
+        // Hint functionality
+        document.getElementById('hint-btn').addEventListener('click', function() {
+            const practice = practiceImages[currentPracticeIndex];
+            const hints = [
+                `Consider the main subject: ${practice.ideal.split(' ').slice(0, 3).join(' ')}...`,
+                "Think about colors, objects, and actions in the image.",
+                "Remember to be specific but concise (under 125 characters).",
+                "Avoid starting with 'image of' or 'picture of'."
+            ];
+            
+            const randomHint = hints[Math.floor(Math.random() * hints.length)];
+            alert(`Hint: ${randomHint}`);
+        });
+
+        // Initialize
+        window.addEventListener('load', () => {
+            loadPracticeImage();
+            updateCharCount();
+            
+            // Add event listener for practice input
+            document.getElementById('practice-input').addEventListener('input', updateCharCount);
+        });
+    </script>
+</body>
+</html>
