@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Alt Text Generator & Trainer | Accessibility Excellence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            min-height: 100vh;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: gradient-shift 15s ease infinite;
+        }
+        
+        @keyframes gradient-shift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 30px); }
+        }
+        
+        .card-hover {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card-hover::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .card-hover:hover::before {
+            left: 100%;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(102, 126, 234, 0.25);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid #667eea;
+            color: #667eea;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+        
+        .score-excellent { 
+            color: #10b981;
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+        }
+        .score-good { 
+            color: #3b82f6;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+        .score-fair { 
+            color: #f59e0b;
+            text-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+        .score-poor { 
+            color: #ef4444;
+            text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 10px 14px;
+            position: absolute;
+            z-index: 1000;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 12px;
+            white-space: nowrap;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 28px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .feature-icon:hover {
+            transform: rotate(5deg) scale(1.1);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.4);
+        }
+        
+        .image-preview {
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .image-preview:hover {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transform: scale(1.02);
+        }
+        
+        .history-item {
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .history-item:hover {
+            background-color: #f9fafb;
+            border-left-color: #667eea;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transform: translateX(4px);
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+        
+        .badge:hover {
+            transform: scale(1.05);
+        }
+        
+        .badge-success { 
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+        }
+        .badge-warning { 
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #92400e;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+        }
+        .badge-info { 
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+        
+        button {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        input, select, textarea {
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        #dropZone {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg, #ffffff, #f9fafb);
+        }
+        
+        #dropZone:hover {
+            border-color: #667eea !important;
+            background: linear-gradient(145deg, #f9fafb, #ffffff);
+            box-shadow: inset 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+        
+        #dropZone.drag-over {
+            border-color: #667eea !important;
+            background: linear-gradient(145deg, #e0e7ff, #eef2ff) !important;
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+        }
+        
+        .progress-bar {
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .stat-card:hover .feature-icon {
+            animation: bounce 0.6s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .neural-network {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .neural-network::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(102, 126, 234, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+        
+        .typing-animation {
+            overflow: hidden;
+            border-right: 2px solid #667eea;
+            white-space: nowrap;
+            margin: 0 auto;
+            animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+        
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #667eea; }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translate(0, 0px); }
+            50% { transform: translate(0, 15px); }
+            100% { transform: translate(0, -0px); }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 5px rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+            100% { box-shadow: 0 0 5px rgba(102, 126, 234, 0.4); }
+        }
+        
+        .ai-processing {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ai-processing::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            animation: ai-processing 2s linear infinite;
+        }
+        
+        @keyframes ai-processing {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(0deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="gradient-bg text-white py-12 px-4 shadow-lg relative overflow-hidden">
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-5xl font-black mb-2">AI Alt Text Generator & Trainer</h1>
+                    <p class="text-indigo-100 text-xl max-w-2xl">Revolutionizing web accessibility with cutting-edge AI and interactive learning tools</p>
+                </div>
+                <div class="hidden md:block">
+                    <div class="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-3 h-3 bg-green-400 rounded-full pulse-glow"></div>
+                            <span class="text-sm font-medium">AI System Online</span>
+                        </div>
+                        <p class="text-xs text-indigo-200 mt-1">Enhanced neural network active</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex space-x-4">
+                <div class="bg-white/10 backdrop-blur-lg rounded-lg p-3 flex items-center">
+                    <i class="fas fa-brain text-white text-xl mr-2"></i>
+                    <span class="text-sm font-medium">Neural AI Engine</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-lg rounded-lg p-3 flex items-center">
+                    <i class="fas fa-graduation-cap text-white text-xl mr-2"></i>
+                    <span class="text-sm font-medium">Adaptive Learning</span>
+                </div>
+                <div class="bg-white/10 backdrop-blur-lg rounded-lg p-3 flex items-center">
+                    <i class="fas fa-chart-line text-white text-xl mr-2"></i>
+                    <span class="text-sm font-medium">Performance Analytics</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 mt-6">
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-8">
+                <button onclick="switchTab('generator')" id="tab-generator" class="tab-active py-4 px-2 font-medium text-gray-700 transition-all">
+                    <i class="fas fa-robot mr-2"></i>Generator
+                </button>
+                <button onclick="switchTab('trainer')" id="tab-trainer" class="py-4 px-2 font-medium text-gray-500 hover:text-gray-700 transition-all">
+                    <i class="fas fa-graduation-cap mr-2"></i>Trainer
+                </button>
+                <button onclick="switchTab('guidelines')" id="tab-guidelines" class="py-4 px-2 font-medium text-gray-500 hover:text-gray-700 transition-all">
+                    <i class="fas fa-book mr-2"></i>Guidelines
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="py-4 px-2 font-medium text-gray-500 hover:text-gray-700 transition-all">
+                    <i class="fas fa-history mr-2"></i>History
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="py-4 px-2 font-medium text-gray-500 hover:text-gray-700 transition-all">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Generator Tab -->
+        <div id="content-generator" class="tab-content">
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Upload Section -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover lg:col-span-2">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-cloud-upload-alt text-indigo-500 mr-2"></i> Upload Image
+                    </h2>
+                    
+                    <div id="dropZone" class="border-3 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-indigo-500 transition-all cursor-pointer">
+                        <div id="uploadPrompt">
+                            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4 floating" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                            <p class="text-lg font-medium text-gray-700 mb-2">Drop an image here or click to browse</p>
+                            <p class="text-sm text-gray-500">Supports: JPG, PNG, GIF, WebP (Max 10MB)</p>
+                        </div>
+                        <img id="imagePreview" class="hidden image-preview mx-auto" alt="Uploaded image preview">
+                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    </div>
+                    
+                    <div class="flex space-x-3 mt-4">
+                        <button onclick="document.getElementById('fileInput').click()" class="flex-1 bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center">
+                            <i class="fas fa-folder-open mr-2"></i> Choose Image
+                        </button>
+                        <button onclick="useSampleImage()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-all shadow-md hover:shadow-lg flex items-center justify-center">
+                            <i class="fas fa-image mr-2"></i> Use Sample
+                        </button>
+                    </div>
+                    
+                    <!-- Context Options -->
+                    <div class="mt-6 grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Image Context</label>
+                            <select id="contextSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="informative">Informative (default)</option>
+                                <option value="decorative">Decorative</option>
+                                <option value="functional">Functional (button/link)</option>
+                                <option value="complex">Complex (chart/diagram)</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tone</label>
+                            <select id="toneSelect" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual</option>
+                                <option value="technical">Technical</option>
+                                <option value="simple">Simple (plain language)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Options -->
+                    <div class="mt-4">
+                        <div class="flex items-center justify-between cursor-pointer" onclick="toggleAdvancedOptions()">
+                            <label class="block text-sm font-semibold text-gray-700">Advanced Options</label>
+                            <i id="advancedToggleIcon" class="fas fa-chevron-down text-gray-500 transition-transform"></i>
+                        </div>
+                        <div id="advancedOptions" class="mt-2 hidden space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Language</label>
+                                <select id="languageSelect" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-1 focus:ring-indigo-500">
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Detail Level</label>
+                                <select id="detailSelect" class="w-full border border-gray-300 rounded-lg px-3 py-1 text-sm focus:ring-1 focus:ring-indigo-500">
+                                    <option value="concise">Concise (recommended)</option>
+                                    <option value="detailed">Detailed</option>
+                                    <option value="comprehensive">Comprehensive</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center">
+                                <input type="checkbox" id="includeEmotions" class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <label for="includeEmotions" class="ml-2 text-xs text-gray-600">Include emotional context</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Alt Text Section -->
+                <div class="bg-white rounded-xl shadow-md p-6 card-hover">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-text-height text-indigo-500 mr-2"></i> Generated Alt Text
+                    </h2>
+                    
+                    <div id="generatedContent" class="hidden">
+                        <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-indigo-600 uppercase">AI Generated</span>
+                                <span id="charCount" class="text-xs text-gray-500">0 characters</span>
+                            </div>
+                            <textarea id="generatedAlt" rows="4" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none" placeholder="Alt text will appear here..."></textarea>
+                        </div>
+                        
+                        <!-- Quality Analysis -->
+                        <div id="qualityAnalysis" class="mb-4 p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 shadow-sm">
+                            <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-chart-line text-indigo-500 mr-2"></i> Quality Analysis
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600 font-medium">Length Score</span>
+                                    <div class="flex items-center">
+                                        <div class="w-32 bg-gray-200 rounded-full h-2.5 mr-2 overflow-hidden">
+                                            <div id="lengthBar" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span id="lengthScore" class="text-sm font-bold text-gray-700 min-w-[50px]">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600 font-medium">Descriptiveness</span>
+                                    <div class="flex items-center">
+                                        <div class="w-32 bg-gray-200 rounded-full h-2.5 mr-2 overflow-hidden">
+                                            <div id="descriptBar" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span id="descriptScore" class="text-sm font-bold text-gray-700 min-w-[50px]">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600 font-medium">Accessibility</span>
+                                    <div class="flex items-center">
+                                        <div class="w-32 bg-gray-200 rounded-full h-2.5 mr-2 overflow-hidden">
+                                            <div id="accessBar" class="progress-bar bg-gradient-to-r from-indigo-500 to-purple-600 h-2.5 rounded-full" style="width: 0%"></div>
+                                        </div>
+                                        <span id="accessScore" class="text-sm font-bold text-gray-700 min-w-[50px]">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                                    <span class="text-sm text-gray-600 font-semibold">Overall Quality</span>
+                                    <span id="overallScore" class="text-sm font-bold">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-3">
+                            <button onclick="copyAltText()" class="flex-1 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 rounded-lg font-semibold hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center">
+                                <i class="fas fa-copy mr-2"></i> Copy
+                            </button>
+                            <button onclick="regenerateAlt()" class="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:from-gray-200 hover:to-gray-300 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center">
+                                <i class="fas fa-redo mr-2"></i> Regenerate
+                            </button>
+                            <button onclick="saveToHistory()" class="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-lg font-semibold hover:from-green-700 hover:to-green-800 transition-all shadow-md hover:shadow-lg transform hover:scale-105 flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Save
+                            </button>
+                        </div>
+                        
+                        <!-- Tips -->
+                        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p class="text-xs text-yellow-800"><i class="fas fa-lightbulb mr-1"></i> <strong>Tip:</strong> <span id="contextTip">Keep alt text concise and descriptive, typically under 125 characters.</span></p>
+                        </div>
+                    </div>
+                    
+                    <div id="placeholderContent" class="flex items-center justify-center h-64 text-gray-400">
+                        <div class="text-center">
+                            <i class="fas fa-text-height text-5xl mb-4"></i>
+                            <p class="font-medium">Upload an image to generate alt text</p>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Processing Indicator -->
+                    <div id="aiProcessing" class="hidden mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-lg ai-processing">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mr-3"></div>
+                            <span class="text-indigo-700 font-medium">AI is analyzing your image...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Suggested Improvements -->
+            <div id="suggestionsSection" class="mt-8 hidden">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-magic text-indigo-500 mr-2"></i> AI Suggestions
+                    </h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <h4 class="font-semibold text-blue-800 mb-2">Alternative 1</h4>
+                            <p id="suggestion1" class="text-sm text-blue-700"></p>
+                            <button onclick="useSuggestion(1)" class="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium">Use this version</button>
+                        </div>
+                        <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                            <h4 class="font-semibold text-green-800 mb-2">Alternative 2</h4>
+                            <p id="suggestion2" class="text-sm text-green-700"></p>
+                            <button onclick="useSuggestion(2)" class="mt-2 text-xs text-green-600 hover:text-green-800 font-medium">Use this version</button>
+                        </div>
+                        <div class="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <h4 class="font-semibold text-purple-800 mb-2">Alternative 3</h4>
+                            <p id="suggestion3" class="text-sm text-purple-700"></p>
+                            <button onclick="useSuggestion(3)" class="mt-2 text-xs text-purple-600 hover:text-purple-800 font-medium">Use this version</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainer Tab -->
+        <div id="content-trainer" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-graduation-cap text-indigo-500 mr-2"></i> Practice Writing Alt Text
+                </h2>
+                
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Practice Image</label>
+                            <select id="practiceImageSelect" onchange="loadPracticeImage()" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500">
+                                <option value="0">Photo: Woman using laptop</option>
+                                <option value="1">Chart: Sales growth bar chart</option>
+                                <option value="2">Logo: Company brand logo</option>
+                                <option value="3">Infographic: Accessibility statistics</option>
+                                <option value="4">Button: Download icon</option>
+                                <option value="5">Landscape: Mountain scenery</option>
+                                <option value="6">Product: Smartphone</option>
+                                <option value="7">Diagram: Process flow</option>
+                            </select>
+                        </div>
+                        
+                        <div id="practiceImageContainer" class="border-2 border-gray-300 rounded-lg p-4 mb-4 bg-gray-100 h-64 flex items-center justify-center">
+                            <p class="text-gray-500 text-center" id="practiceImageDesc">Image preview will appear here</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-blue-800 mb-2 flex items-center">
+                                <i class="fas fa-info-circle mr-2"></i> Image Details
+                            </h3>
+                            <p class="text-sm text-blue-700" id="imageDetails">Select an image to see details</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Your Alt Text</label>
+                        <textarea id="practiceAltInput" rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 mb-2" placeholder="Write your alt text here..."></textarea>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xs text-gray-500" id="practiceCharCount">0 / 125 characters</span>
+                            <button onclick="evaluatePractice()" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-all flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i> Evaluate
+                            </button>
+                        </div>
+                        
+                        <!-- Evaluation Results -->
+                        <div id="evaluationResults" class="hidden">
+                            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg font-semibold">Your Score</span>
+                                    <span id="practiceScore" class="text-4xl font-bold">-</span>
+                                </div>
+                                <div class="mt-2 bg-white bg-opacity-20 rounded-full h-2">
+                                    <div id="practiceScoreBar" class="bg-white h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                    <h4 class="font-semibold text-green-800 text-sm mb-1 flex items-center">
+                                        <i class="fas fa-check mr-2"></i> Strengths
+                                    </h4>
+                                    <ul id="strengthsList" class="text-sm text-green-700 space-y-1"></ul>
+                                </div>
+                                
+                                <div class="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                                    <h4 class="font-semibold text-orange-800 text-sm mb-1 flex items-center">
+                                        <i class="fas fa-exclamation-triangle mr-2"></i> Areas for Improvement
+                                    </h4>
+                                    <ul id="improvementsList" class="text-sm text-orange-700 space-y-1"></ul>
+                                </div>
+                                
+                                <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                                    <h4 class="font-semibold text-indigo-800 text-sm mb-1 flex items-center">
+                                        <i class="fas fa-lightbulb mr-2"></i> Suggested Alt Text
+                                    </h4>
+                                    <p id="suggestedAlt" class="text-sm text-indigo-700"></p>
+                                </div>
+                            </div>
+                            
+                            <button onclick="nextPracticeImage()" class="mt-4 w-full bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-all flex items-center justify-center">
+                                <i class="fas fa-arrow-right mr-2"></i> Next Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Practice Stats -->
+            <div class="mt-8 grid md:grid-cols-4 gap-6">
+                <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Images Practiced</p>
+                            <p id="statPracticed" class="text-4xl font-bold text-gray-800 mt-2">0</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Average Score</p>
+                            <p id="statAvgScore" class="text-4xl font-bold text-gray-800 mt-2">-</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Completion Rate</p>
+                            <p id="statCompletion" class="text-4xl font-bold text-gray-800 mt-2">0%</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Current Streak</p>
+                            <p id="statStreak" class="text-4xl font-bold text-gray-800 mt-2">0</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Chart -->
+            <div class="mt-8 bg-white rounded-xl shadow-md p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">Progress Over Time</h3>
+                <div class="h-64">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines Tab -->
+        <div id="content-guidelines" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-8">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Alt Text Best Practices</h2>
+                
+                <div class="space-y-6">
+                    <div class="border-l-4 border-indigo-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">1. Be Concise Yet Descriptive</h3>
+                        <p class="text-gray-600 mb-2">Aim for 125 characters or less. Screen readers may cut off longer descriptions.</p>
+                        <div class="bg-green-50 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700"><strong>✓ Good:</strong> "Woman smiling while working on laptop in modern office"</p>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700"><strong>✗ Bad:</strong> "Photo of a woman"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">2. Convey Content and Function</h3>
+                        <p class="text-gray-600 mb-2">Describe what the image shows and why it's there.</p>
+                        <div class="bg-green-50 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700"><strong>✓ Good:</strong> "Bar chart showing 30% increase in quarterly sales"</p>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700"><strong>✗ Bad:</strong> "Chart"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-pink-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">3. Avoid Redundancy</h3>
+                        <p class="text-gray-600 mb-2">Don't start with "Image of..." or "Picture of..." - it's implied.</p>
+                        <div class="bg-green-50 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700"><strong>✓ Good:</strong> "Golden retriever playing fetch in park"</p>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700"><strong>✗ Bad:</strong> "Image of a golden retriever playing fetch in a park"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">4. Context Matters</h3>
+                        <p class="text-gray-600 mb-2">Decorative images should have empty alt text (alt=""). Functional images need to describe the action.</p>
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700"><strong>For a download button:</strong> "Download PDF report"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">5. Include Relevant Text</h3>
+                        <p class="text-gray-600 mb-2">If an image contains important text, include it in the alt text.</p>
+                        <div class="bg-green-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700"><strong>✓ Good:</strong> "Road sign reading 'Speed Limit 25'"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-yellow-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">6. Don't Describe Emotions You Can't Verify</h3>
+                        <p class="text-gray-600 mb-2">Focus on observable details rather than assumed emotions.</p>
+                        <div class="bg-green-50 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700"><strong>✓ Good:</strong> "Person smiling at camera"</p>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700"><strong>✗ Bad:</strong> "Happy person" (smiling is observable; happiness is an assumption)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white">
+                    <h3 class="text-xl font-bold mb-2 flex items-center">
+                        <i class="fas fa-star mr-2"></i> Pro Tip
+                    </h3>
+                    <p>Ask yourself: "If I couldn't see this image, what would I need to know?" Write alt text that answers that question clearly and concisely.</p>
+                </div>
+                
+                <!-- WCAG Compliance Section -->
+                <div class="mt-8 border border-gray-200 rounded-xl overflow-hidden">
+                    <div class="bg-gray-800 text-white p-4">
+                        <h3 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-universal-access mr-2"></i> WCAG 2.1 Compliance Guidelines
+                        </h3>
+                    </div>
+                    <div class="p-6 bg-white">
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">Success Criteria</h4>
+                                <ul class="text-sm text-gray-600 space-y-2">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                        <span>1.1.1 Non-text Content (Level A)</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                        <span>1.4.5 Images of Text (Level AA)</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                                        <span>1.4.9 Images of Text (No Exception) (Level AAA)</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-gray-800 mb-2">Testing Tools</h4>
+                                <ul class="text-sm text-gray-600 space-y-2">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-tools text-blue-500 mt-1 mr-2"></i>
+                                        <span>WAVE Web Accessibility Evaluation Tool</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-tools text-blue-500 mt-1 mr-2"></i>
+                                        <span>axe Accessibility Testing</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <i class="fas fa-tools text-blue-500 mt-1 mr-2"></i>
+                                        <span>Lighthouse Accessibility Audit</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="content-history" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-history text-indigo-500 mr-2"></i> Generation History
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button onclick="exportHistory()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-all text-sm flex items-center">
+                            <i class="fas fa-download mr-2"></i> Export
+                        </button>
+                        <button onclick="clearHistory()" class="text-red-600 hover:text-red-700 font-semibold text-sm flex items-center">
+                            <i class="fas fa-trash mr-1"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-4 flex space-x-4">
+                    <button id="filterAll" onclick="filterHistory('all')" class="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg font-medium text-sm">All</button>
+                    <button id="filterInformative" onclick="filterHistory('informative')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm">Informative</button>
+                    <button id="filterDecorative" onclick="filterHistory('decorative')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm">Decorative</button>
+                    <button id="filterFunctional" onclick="filterHistory('functional')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm">Functional</button>
+                    <button id="filterComplex" onclick="filterHistory('complex')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium text-sm">Complex</button>
+                </div>
+                
+                <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-history text-5xl mb-4"></i>
+                        <p class="font-medium">No history yet</p>
+                        <p class="text-sm">Generated alt text will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="content-analytics" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-chart-bar text-indigo-500 mr-2"></i> Performance Analytics
+                </h2>
+                
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Total Generations</p>
+                                <p id="analyticsTotal" class="text-4xl font-bold text-gray-800 mt-2">0</p>
+                            </div>
+                            <div class="feature-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Avg. Quality Score</p>
+                                <p id="analyticsQuality" class="text-4xl font-bold text-gray-800 mt-2">-</p>
+                            </div>
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Most Used Context</p>
+                                <p id="analyticsContext" class="text-4xl font-bold text-gray-800 mt-2">-</p>
+                            </div>
+                            <div class="feature-icon">
+                                <i class="fas fa-tag"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-card rounded-xl shadow-md p-6 card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500 text-sm font-semibold uppercase tracking-wide">Productivity Score</p>
+                                <p id="analyticsProductivity" class="text-4xl font-bold text-gray-800 mt-2">-</p>
+                            </div>
+                            <div class="feature-icon">
+                                <i class="fas fa-rocket"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Context Distribution</h3>
+                        <div class="h-64">
+                            <canvas id="contextChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Quality Trends</h3>
+                        <div class="h-64">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+                    <div id="activityFeed" class="space-y-3">
+                        <div class="text-center py-8 text-gray-400">
+                            <i class="fas fa-chart-line text-4xl mb-4"></i>
+                            <p class="font-medium">No activity data yet</p>
+                            <p class="text-sm">Generate some alt text to see analytics</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">AI Alt Text Generator</h3>
+                    <p class="text-gray-300">Enhancing web accessibility through cutting-edge AI technology and interactive learning tools.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Features</h4>
+                    <ul class="text-gray-300 space-y-2">
+                        <li><a href="#" class="hover:text-white">AI Generation</a></li>
+                        <li><a href="#" class="hover:text-white">Interactive Training</a></li>
+                        <li><a href="#" class="hover:text-white">Quality Analysis</a></li>
+                        <li><a href="#" class="hover:text-white">Performance Analytics</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Resources</h4>
+                    <ul class="text-gray-300 space-y-2">
+                        <li><a href="#" class="hover:text-white">WCAG Guidelines</a></li>
+                        <li><a href="#" class="hover:text-white">Best Practices</a></li>
+                        <li><a href="#" class="hover:text-white">Accessibility Tools</a></li>
+                        <li><a href="#" class="hover:text-white">Documentation</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Connect</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>Built with accessibility in mind | WCAG 2.1 AA Compliant</p>
+                <p class="text-sm mt-2">© 2025 AI Alt Text Generator & Trainer | Neural Network Enhanced</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global state
+        let currentImage = null;
+        let historyItems = JSON.parse(localStorage.getItem('altTextHistory')) || [];
+        let practiceStats = JSON.parse(localStorage.getItem('practiceStats')) || {
+            practiced: 0,
+            totalScore: 0,
+            completed: 0,
+            streak: 0,
+            lastPractice: null,
+            progress: []
+        };
+        
+        const practiceImages = [
+            {
+                desc: "Professional woman with dark hair wearing a blue blazer, smiling while typing on a silver laptop in a bright modern office",
+                context: "informative",
+                ideal: "Woman smiling while working on laptop in modern office",
+                keywords: ["woman", "laptop", "office", "working", "professional"]
+            },
+            {
+                desc: "Vertical bar chart with 4 blue bars showing quarterly sales data from Q1 to Q4, with Q4 bar highest at approximately 30% above baseline",
+                context: "complex",
+                ideal: "Bar chart showing quarterly sales growth with Q4 30% above Q1",
+                keywords: ["bar chart", "sales", "quarterly", "growth", "data"]
+            },
+            {
+                desc: "Circular logo with the letters 'AC' in white on a purple gradient background",
+                context: "functional",
+                ideal: "AccessCorp company logo",
+                keywords: ["logo", "brand", "company"]
+            },
+            {
+                desc: "Infographic with icons and statistics showing '15% of global population has a disability' and '1 billion people benefit from accessible design'",
+                context: "complex",
+                ideal: "Infographic showing 15% of people have disabilities and 1 billion benefit from accessible design",
+                keywords: ["infographic", "statistics", "disability", "accessibility", "data"]
+            },
+            {
+                desc: "Green circular button with white downward arrow icon in the center",
+                context: "functional",
+                ideal: "Download",
+                keywords: ["download", "button", "action"]
+            },
+            {
+                desc: "Snow-capped mountain peak during sunset with orange and pink sky, pine trees in foreground",
+                context: "informative",
+                ideal: "Snow-capped mountain at sunset with colorful sky",
+                keywords: ["mountain", "sunset", "snow", "sky", "landscape"]
+            },
+            {
+                desc: "Latest model smartphone with large screen, showing home screen with app icons",
+                context: "informative",
+                ideal: "Modern smartphone displaying home screen with apps",
+                keywords: ["smartphone", "screen", "apps", "device", "modern"]
+            },
+            {
+                desc: "Flowchart with rectangles and arrows showing a 5-step process from start to completion",
+                context: "complex",
+                ideal: "Flowchart illustrating 5-step process from start to finish",
+                keywords: ["flowchart", "process", "steps", "diagram", "arrows"]
+            }
+        ];
+
+        // Initialize charts
+        let progressChart, contextChart, qualityChart;
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
+            
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('tab-active');
+            
+            // Initialize charts when switching to analytics tab
+            if (tabName === 'analytics') {
+                setTimeout(initializeAnalyticsCharts, 100);
+            }
+        }
+
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(file);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+            }
+        });
+
+        function handleImageUpload(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                imagePreview.src = currentImage;
+                imagePreview.classList.remove('hidden');
+                uploadPrompt.classList.add('hidden');
+                
+                generateAltText();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function useSampleImage() {
+            // Use a sample image URL for demonstration
+            currentImage = 'https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80';
+            imagePreview.src = currentImage;
+            imagePreview.classList.remove('hidden');
+            uploadPrompt.classList.add('hidden');
+            
+            generateAltText();
+        }
+
+        function toggleAdvancedOptions() {
+            const advancedOptions = document.getElementById('advancedOptions');
+            const icon = document.getElementById('advancedToggleIcon');
+            
+            if (advancedOptions.classList.contains('hidden')) {
+                advancedOptions.classList.remove('hidden');
+                icon.classList.add('fa-chevron-up');
+                icon.classList.remove('fa-chevron-down');
+            } else {
+                advancedOptions.classList.add('hidden');
+                icon.classList.add('fa-chevron-down');
+                icon.classList.remove('fa-chevron-up');
+            }
+        }
+
+        function generateAltText() {
+            const context = document.getElementById('contextSelect').value;
+            const tone = document.getElementById('toneSelect').value;
+            const language = document.getElementById('languageSelect').value;
+            const detail = document.getElementById('detailSelect').value;
+            const includeEmotions = document.getElementById('includeEmotions').checked;
+            
+            document.getElementById('placeholderContent').classList.add('hidden');
+            const generatedContent = document.getElementById('generatedContent');
+            generatedContent.classList.remove('hidden');
+            generatedContent.classList.add('fade-in');
+            
+            // Show AI processing indicator
+            document.getElementById('aiProcessing').classList.remove('hidden');
+            
+            // Simulate AI processing time
+            setTimeout(() => {
+                let altText = generateSmartAltText(context, tone, language, detail, includeEmotions);
+                
+                const textarea = document.getElementById('generatedAlt');
+                textarea.value = altText;
+                
+                updateCharCount();
+                analyzeQuality(altText);
+                updateContextTip(context);
+                
+                // Hide AI processing indicator
+                document.getElementById('aiProcessing').classList.add('hidden');
+                
+                // Generate suggestions
+                generateSuggestions(altText, context, tone);
+            }, 1500);
+        }
+
+        function generateSmartAltText(context, tone, language, detail, includeEmotions) {
+            // Enhanced AI simulation with more sophisticated templates
+            const contextTemplates = {
+                informative: [
+                    "Professional working on laptop in modern office environment",
+                    "Team collaborating around conference table during meeting",
+                    "Person reviewing data charts on computer monitor in office",
+                    "Individual using smartphone while sitting at desk",
+                    "Group of colleagues in discussion with presentation screen visible"
+                ],
+                decorative: "",
+                functional: [
+                    "Click to view full image",
+                    "Select to expand details",
+                    "Open in new window",
+                    "Download file"
+                ],
+                complex: [
+                    "Line graph showing upward trend from 2020 to 2025 with 45% increase",
+                    "Pie chart displaying market share distribution across competitors",
+                    "Flowchart illustrating customer onboarding process in 5 steps",
+                    "Venn diagram comparing features of three different products",
+                    "Timeline infographic showing company milestones from founding to present"
+                ]
+            };
+
+            if (context === 'decorative') {
+                return '';
+            }
+
+            const templates = contextTemplates[context] || contextTemplates.informative;
+            let altText = templates[Math.floor(Math.random() * templates.length)];
+
+            // Apply detail level
+            if (detail === 'detailed') {
+                altText = addDetail(altText);
+            } else if (detail === 'comprehensive') {
+                altText = addDetail(altText);
+                altText = addComprehensiveDetails(altText);
+            }
+
+            // Apply tone adjustments
+            altText = applyTone(altText, tone);
+
+            // Apply emotional context if requested
+            if (includeEmotions && context !== 'functional' && context !== 'decorative') {
+                altText = addEmotionalContext(altText);
+            }
+
+            return altText;
+        }
+
+        function addDetail(text) {
+            const details = [
+                "with natural lighting",
+                "in a well-lit environment",
+                "with modern furniture",
+                "using contemporary technology",
+                "in a collaborative setting"
+            ];
+            
+            return text + " " + details[Math.floor(Math.random() * details.length)];
+        }
+
+        function addComprehensiveDetails(text) {
+            const comprehensive = [
+                "focusing intently on the task",
+                "with documents and notes scattered on the desk",
+                "while engaging with colleagues in the background",
+                "in a spacious office with large windows",
+                "using ergonomic office equipment"
+            ];
+            
+            return text + ". " + comprehensive[Math.floor(Math.random() * comprehensive.length)];
+        }
+
+        function applyTone(text, tone) {
+            if (tone === 'casual') {
+                return text.replace(/Professional/g, "Person")
+                          .replace(/collaborating/g, "working together")
+                          .replace(/illustrating/g, "showing");
+            } else if (tone === 'technical') {
+                return text.replace(/working on/g, "operating")
+                          .replace(/showing/g, "depicting")
+                          .replace(/click to/g, "select to");
+            } else if (tone === 'simple') {
+                return text.replace(/Professional/g, "Person")
+                          .replace(/collaborating/g, "working together")
+                          .replace(/illustrating/g, "showing")
+                          .replace(/environment/g, "place");
+            }
+            
+            return text;
+        }
+
+        function addEmotionalContext(text) {
+            const emotions = [
+                "appearing focused and engaged",
+                "with a positive and energetic demeanor",
+                "showing concentration on the task",
+                "demonstrating collaborative spirit"
+            ];
+            
+            return text + ", " + emotions[Math.floor(Math.random() * emotions.length)];
+        }
+
+        function generateSuggestions(originalAlt, context, tone) {
+            const suggestions = [
+                generateAlternativeVersion(originalAlt, context, tone),
+                generateAlternativeVersion(originalAlt, context, tone),
+                generateAlternativeVersion(originalAlt, context, tone)
+            ];
+            
+            document.getElementById('suggestion1').textContent = suggestions[0];
+            document.getElementById('suggestion2').textContent = suggestions[1];
+            document.getElementById('suggestion3').textContent = suggestions[2];
+            
+            document.getElementById('suggestionsSection').classList.remove('hidden');
+        }
+
+        function generateAlternativeVersion(original, context, tone) {
+            // Create variations of the original alt text
+            const variations = [
+                original.replace(/in/g, "within").replace(/on/g, "using"),
+                original.replace(/showing/g, "displaying").replace(/with/g, "featuring"),
+                original.replace(/Professional/g, "Businessperson").replace(/modern/g, "contemporary")
+            ];
+            
+            return variations[Math.floor(Math.random() * variations.length)];
+        }
+
+        function useSuggestion(num) {
+            const suggestion = document.getElementById(`suggestion${num}`).textContent;
+            document.getElementById('generatedAlt').value = suggestion;
+            updateCharCount();
+            analyzeQuality(suggestion);
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('generatedAlt').value;
+            document.getElementById('charCount').textContent = `${text.length} characters`;
+        }
+
+        function analyzeQuality(text) {
+            const length = text.length;
+            let lengthScore = 0;
+            
+            if (length >= 25 && length <= 125) {
+                lengthScore = 100;
+            } else if (length > 125 && length <= 150) {
+                lengthScore = 80;
+            } else if (length < 25 && length >= 10) {
+                lengthScore = 60;
+            } else {
+                lengthScore = 30;
+            }
+
+            const descriptWords = ['showing', 'displaying', 'featuring', 'with', 'in', 'of', 'wearing'];
+            const hasDescriptors = descriptWords.some(word => text.toLowerCase().includes(word));
+            const wordCount = text.split(' ').length;
+            let descriptScore = Math.min(100, (wordCount * 15));
+            if (hasDescriptors) descriptScore = Math.min(100, descriptScore + 20);
+
+            const avoidWords = ['image of', 'picture of', 'photo of'];
+            const hasAvoidWords = avoidWords.some(phrase => text.toLowerCase().includes(phrase));
+            if (hasAvoidWords) descriptScore -= 20;
+
+            // Accessibility score based on WCAG guidelines compliance
+            let accessScore = 75; // Base score
+            if (length <= 125) accessScore += 10;
+            if (!hasAvoidWords) accessScore += 10;
+            if (wordCount >= 5) accessScore += 5;
+            accessScore = Math.min(100, accessScore);
+
+            const overallScore = Math.round((lengthScore + descriptScore + accessScore) / 3);
+
+            document.getElementById('lengthBar').style.width = `${lengthScore}%`;
+            document.getElementById('descriptBar').style.width = `${descriptScore}%`;
+            document.getElementById('accessBar').style.width = `${accessScore}%`;
+            
+            document.getElementById('lengthScore').textContent = `${lengthScore}/100`;
+            document.getElementById('descriptScore').textContent = `${descriptScore}/100`;
+            document.getElementById('accessScore').textContent = `${accessScore}/100`;
+            
+            let scoreClass = 'score-poor';
+            let scoreText = 'Needs Work';
+            if (overallScore >= 90) { scoreClass = 'score-excellent'; scoreText = 'Excellent'; }
+            else if (overallScore >= 75) { scoreClass = 'score-good'; scoreText = 'Good'; }
+            else if (overallScore >= 60) { scoreClass = 'score-fair'; scoreText = 'Fair'; }
+            
+            const scoreEl = document.getElementById('overallScore');
+            scoreEl.textContent = `${overallScore}/100 - ${scoreText}`;
+            scoreEl.className = `text-sm font-bold ${scoreClass}`;
+        }
+
+        function updateContextTip(context) {
+            const tips = {
+                informative: "Keep alt text concise and descriptive, typically under 125 characters.",
+                decorative: "Decorative images should have empty alt text (alt=\"\") to be skipped by screen readers.",
+                functional: "Describe the action or destination, not the image itself (e.g., 'Download report' not 'Download icon').",
+                complex: "For complex images, provide a brief description and consider adding a longer description nearby."
+            };
+            document.getElementById('contextTip').textContent = tips[context];
+        }
+
+        function copyAltText() {
+            const text = document.getElementById('generatedAlt').value;
+            navigator.clipboard.writeText(text).then(() => {
+                // Show a subtle notification instead of alert
+                const button = event.target;
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check mr-2"></i> Copied!';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+
+        function regenerateAlt() {
+            generateAltText();
+        }
+
+        function saveToHistory() {
+            const altText = document.getElementById('generatedAlt').value;
+            if (!altText) return;
+            
+            const historyItem = {
+                id: Date.now(),
+                timestamp: new Date(),
+                altText: altText,
+                context: document.getElementById('contextSelect').value,
+                tone: document.getElementById('toneSelect').value,
+                image: currentImage,
+                quality: document.getElementById('overallScore').textContent.split('/')[0]
+            };
+            
+            historyItems.unshift(historyItem);
+            if (historyItems.length > 50) historyItems.pop();
+            
+            // Save to localStorage
+            localStorage.setItem('altTextHistory', JSON.stringify(historyItems));
+            
+            renderHistory();
+            
+            // Show a subtle notification
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-2"></i> Saved!';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function renderHistory(filter = 'all') {
+            const listEl = document.getElementById('historyList');
+            
+            // Update filter buttons
+            document.querySelectorAll('#content-history button[id^="filter"]').forEach(btn => {
+                btn.classList.remove('bg-indigo-100', 'text-indigo-700');
+                btn.classList.add('bg-gray-100', 'text-gray-700');
+            });
+            document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('bg-indigo-100', 'text-indigo-700');
+            
+            const filteredItems = filter === 'all' ? historyItems : historyItems.filter(item => item.context === filter);
+            
+            if (filteredItems.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12 text-gray-400">
+                        <i class="fas fa-history text-5xl mb-4"></i>
+                        <p class="font-medium">No history yet</p>
+                        <p class="text-sm">Generated alt text will appear here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listEl.innerHTML = filteredItems.map(item => `
+                <div class="history-item p-4 border border-gray-200 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <span class="badge badge-info">${item.context}</span>
+                            <span class="badge badge-warning ml-2">${item.tone}</span>
+                            <span class="badge badge-success ml-2">${item.quality}/100</span>
+                        </div>
+                        <span class="text-xs text-gray-500">${formatTime(item.timestamp)}</span>
+                    </div>
+                    <p class="text-gray-800 text-sm mb-2">"${item.altText}"</p>
+                    <div class="flex space-x-2">
+                        <button onclick="copyHistoryItem(${item.id})" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold flex items-center">
+                            <i class="fas fa-copy mr-1"></i> Copy
+                        </button>
+                        <button onclick="deleteHistoryItem(${item.id})" class="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterHistory(filter) {
+            renderHistory(filter);
+        }
+
+        function formatTime(date) {
+            if (typeof date === 'string') date = new Date(date);
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return date.toLocaleDateString();
+        }
+
+        function copyHistoryItem(id) {
+            const item = historyItems.find(item => item.id === id);
+            navigator.clipboard.writeText(item.altText);
+            
+            // Show a subtle notification
+            const button = event.target;
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function deleteHistoryItem(id) {
+            historyItems = historyItems.filter(item => item.id !== id);
+            localStorage.setItem('altTextHistory', JSON.stringify(historyItems));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all history?')) {
+                historyItems = [];
+                localStorage.setItem('altTextHistory', JSON.stringify(historyItems));
+                renderHistory();
+            }
+        }
+
+        function exportHistory() {
+            const dataStr = JSON.stringify(historyItems, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'alt-text-history.json';
+            link.click();
+        }
+
+        // Practice mode functions
+        function loadPracticeImage() {
+            const idx = parseInt(document.getElementById('practiceImageSelect').value);
+            const image = practiceImages[idx];
+            
+            document.getElementById('practiceImageDesc').textContent = image.desc;
+            document.getElementById('imageDetails').innerHTML = `
+                <strong>Context:</strong> ${image.context}<br>
+                <strong>Key elements to include:</strong> ${image.keywords.join(', ')}
+            `;
+            
+            document.getElementById('evaluationResults').classList.add('hidden');
+            document.getElementById('practiceAltInput').value = '';
+            updatePracticeCharCount();
+        }
+
+        document.getElementById('practiceAltInput').addEventListener('input', updatePracticeCharCount);
+
+        function updatePracticeCharCount() {
+            const text = document.getElementById('practiceAltInput').value;
+            const count = text.length;
+            const countEl = document.getElementById('practiceCharCount');
+            countEl.textContent = `${count} / 125 characters`;
+            
+            if (count > 125) {
+                countEl.classList.add('text-red-600');
+            } else {
+                countEl.classList.remove('text-red-600');
+            }
+        }
+
+        function evaluatePractice() {
+            const userAlt = document.getElementById('practiceAltInput').value.trim();
+            if (!userAlt) {
+                alert('Please write some alt text first!');
+                return;
+            }
+            
+            const idx = parseInt(document.getElementById('practiceImageSelect').value);
+            const image = practiceImages[idx];
+            
+            let score = 0;
+            const strengths = [];
+            const improvements = [];
+            
+            // Length check
+            if (userAlt.length >= 20 && userAlt.length <= 125) {
+                score += 25;
+                strengths.push('Good length - concise and informative');
+            } else if (userAlt.length > 125) {
+                improvements.push('Alt text is too long - try to keep it under 125 characters');
+            } else {
+                improvements.push('Alt text is too brief - add more descriptive details');
+            }
+            
+            // Keyword inclusion
+            const matchedKeywords = image.keywords.filter(kw => 
+                userAlt.toLowerCase().includes(kw.toLowerCase())
+            );
+            const keywordScore = (matchedKeywords.length / image.keywords.length) * 35;
+            score += keywordScore;
+            
+            if (matchedKeywords.length >= 3) {
+                strengths.push('Includes key image elements');
+            } else {
+                improvements.push(`Consider mentioning: ${image.keywords.filter(kw => 
+                    !userAlt.toLowerCase().includes(kw.toLowerCase())
+                ).join(', ')}`);
+            }
+            
+            // Avoid redundancy
+            const redundantPhrases = ['image of', 'picture of', 'photo of', 'graphic of'];
+            const hasRedundancy = redundantPhrases.some(phrase => 
+                userAlt.toLowerCase().includes(phrase)
+            );
+            
+            if (!hasRedundancy) {
+                score += 20;
+                strengths.push('No redundant phrases like "image of"');
+            } else {
+                improvements.push('Avoid phrases like "image of" - it\'s already implied');
+            }
+            
+            // Specificity
+            const specificWords = userAlt.split(' ').filter(word => word.length > 4).length;
+            if (specificWords >= 4) {
+                score += 20;
+                strengths.push('Good level of specific detail');
+            } else {
+                improvements.push('Add more specific descriptive words');
+            }
+            
+            score = Math.min(100, Math.round(score));
+            
+            // Update stats
+            const today = new Date().toDateString();
+            practiceStats.practiced++;
+            practiceStats.totalScore += score;
+            practiceStats.completed++;
+            
+            // Update streak
+            if (practiceStats.lastPractice === today) {
+                // Already practiced today, don't change streak
+            } else if (practiceStats.lastPractice && 
+                      (new Date(practiceStats.lastPractice).getTime() === new Date(today).getTime() - 86400000)) {
+                // Practiced yesterday, increment streak
+                practiceStats.streak++;
+            } else {
+                // Break in streak, reset to 1
+                practiceStats.streak = 1;
+            }
+            practiceStats.lastPractice = today;
+            
+            // Add to progress
+            practiceStats.progress.push({
+                date: today,
+                score: score
+            });
+            
+            // Keep only last 10 progress entries
+            if (practiceStats.progress.length > 10) {
+                practiceStats.progress = practiceStats.progress.slice(-10);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('practiceStats', JSON.stringify(practiceStats));
+            
+            updatePracticeStats();
+            updateProgressChart();
+            
+            // Display results
+            document.getElementById('practiceScore').textContent = score;
+            document.getElementById('practiceScoreBar').style.width = `${score}%`;
+            
+            document.getElementById('strengthsList').innerHTML = strengths.length > 0
+                ? strengths.map(s => `<li>• ${s}</li>`).join('')
+                : '<li>Keep practicing to improve!</li>';
+            
+            document.getElementById('improvementsList').innerHTML = improvements.length > 0
+                ? improvements.map(i => `<li>• ${i}</li>`).join('')
+                : '<li>Excellent work - no major improvements needed!</li>';
+            
+            document.getElementById('suggestedAlt').textContent = image.ideal;
+            
+            document.getElementById('evaluationResults').classList.remove('hidden');
+        }
+
+        function updatePracticeStats() {
+            document.getElementById('statPracticed').textContent = practiceStats.practiced;
+            
+            const avgScore = practiceStats.practiced > 0 
+                ? Math.round(practiceStats.totalScore / practiceStats.practiced)
+                : 0;
+            document.getElementById('statAvgScore').textContent = avgScore > 0 ? avgScore : '-';
+            
+            const completion = Math.round((practiceStats.completed / practiceImages.length) * 100);
+            document.getElementById('statCompletion').textContent = `${completion}%`;
+            
+            document.getElementById('statStreak').textContent = practiceStats.streak;
+        }
+
+        function updateProgressChart() {
+            if (progressChart) {
+                progressChart.destroy();
+            }
+            
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const labels = practiceStats.progress.map(p => p.date.substring(0, 10));
+            const data = practiceStats.progress.map(p => p.score);
+            
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Practice Score',
+                        data: data,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function nextPracticeImage() {
+            const select = document.getElementById('practiceImageSelect');
+            const currentIdx = parseInt(select.value);
+            const nextIdx = (currentIdx + 1) % practiceImages.length;
+            select.value = nextIdx;
+            loadPracticeImage();
+        }
+
+        // Analytics functions
+        function initializeAnalyticsCharts() {
+            updateAnalyticsStats();
+            updateContextChart();
+            updateQualityChart();
+            updateActivityFeed();
+        }
+
+        function updateAnalyticsStats() {
+            document.getElementById('analyticsTotal').textContent = historyItems.length;
+            
+            // Calculate average quality
+            const totalQuality = historyItems.reduce((sum, item) => sum + parseInt(item.quality), 0);
+            const avgQuality = historyItems.length > 0 ? Math.round(totalQuality / historyItems.length) : 0;
+            document.getElementById('analyticsQuality').textContent = avgQuality > 0 ? `${avgQuality}/100` : '-';
+            
+            // Find most used context
+            const contextCounts = {};
+            historyItems.forEach(item => {
+                contextCounts[item.context] = (contextCounts[item.context] || 0) + 1;
+            });
+            
+            let mostUsedContext = '-';
+            let maxCount = 0;
+            for (const context in contextCounts) {
+                if (contextCounts[context] > maxCount) {
+                    maxCount = contextCounts[context];
+                    mostUsedContext = context.charAt(0).toUpperCase() + context.slice(1);
+                }
+            }
+            document.getElementById('analyticsContext').textContent = mostUsedContext;
+            
+            // Calculate productivity score
+            const productivity = historyItems.length * 2 + avgQuality;
+            document.getElementById('analyticsProductivity').textContent = productivity > 0 ? productivity : '-';
+        }
+
+        function updateContextChart() {
+            const ctx = document.getElementById('contextChart').getContext('2d');
+            
+            // Count contexts
+            const contextCounts = {
+                informative: 0,
+                decorative: 0,
+                functional: 0,
+                complex: 0
+            };
+            
+            historyItems.forEach(item => {
+                if (contextCounts.hasOwnProperty(item.context)) {
+                    contextCounts[item.context]++;
+                }
+            });
+            
+            if (contextChart) {
+                contextChart.destroy();
+            }
+            
+            contextChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Informative', 'Decorative', 'Functional', 'Complex'],
+                    datasets: [{
+                        data: [
+                            contextCounts.informative,
+                            contextCounts.decorative,
+                            contextCounts.functional,
+                            contextCounts.complex
+                        ],
+                        backgroundColor: [
+                            '#667eea',
+                            '#f6ad55',
+                            '#68d391',
+                            '#fc8181'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateQualityChart() {
+            const ctx = document.getElementById('qualityChart').getContext('2d');
+            
+            // Get last 7 quality scores
+            const recentItems = historyItems.slice(0, 7).reverse();
+            const labels = recentItems.map(item => formatTime(item.timestamp));
+            const data = recentItems.map(item => parseInt(item.quality));
+            
+            if (qualityChart) {
+                qualityChart.destroy();
+            }
+            
+            qualityChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quality Score',
+                        data: data,
+                        backgroundColor: '#667eea',
+                        borderColor: '#764ba2',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateActivityFeed() {
+            const feedEl = document.getElementById('activityFeed');
+            
+            if (historyItems.length === 0) {
+                feedEl.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-chart-line text-4xl mb-4"></i>
+                        <p class="font-medium">No activity data yet</p>
+                        <p class="text-sm">Generate some alt text to see analytics</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const recentItems = historyItems.slice(0, 5);
+            feedEl.innerHTML = recentItems.map(item => `
+                <div class="flex items-center p-3 border border-gray-200 rounded-lg">
+                    <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-image text-indigo-500"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-800">Generated alt text for ${item.context} image</p>
+                        <p class="text-xs text-gray-500">${formatTime(item.timestamp)} • Quality: ${item.quality}/100</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Event listeners
+        document.getElementById('generatedAlt').addEventListener('input', function() {
+            updateCharCount();
+            analyzeQuality(this.value);
+        });
+
+        document.getElementById('contextSelect').addEventListener('change', function() {
+            if (currentImage) generateAltText();
+        });
+
+        document.getElementById('toneSelect').addEventListener('change', function() {
+            if (currentImage) generateAltText();
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPracticeImage();
+            updatePracticeStats();
+            renderHistory();
+            
+            // Initialize progress chart if there's data
+            if (practiceStats.progress.length > 0) {
+                updateProgressChart();
+            }
+        });
+    </script>
+</body>
+</html>
