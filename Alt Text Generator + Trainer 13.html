@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Powered Alt Text Generator & Trainer | Professional Accessibility Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --bg: #f9fafb;
+            --card: #ffffff;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+        }
+        
+        .dark {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --accent: #f59e0b;
+            --text: #f9fafb;
+            --text-light: #d1d5db;
+            --bg: #111827;
+            --card: #1f2937;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+        }
+        
+        .card {
+            background-color: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            color: white;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .image-preview {
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success { background-color: #d1fae5; color: #065f46; }
+        .badge-warning { background-color: #fef3c7; color: #92400e; }
+        .badge-info { background-color: #dbeafe; color: #1e40af; }
+        .badge-error { background-color: #fee2e2; color: #991b1b; }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s;
+            transform: rotate(90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            background-color: #1f2937;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px 12px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .dark .tooltip .tooltiptext {
+            background-color: #f9fafb;
+            color: #1f2937;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        
+        .score-excellent { color: #10b981; }
+        .score-good { color: #3b82f6; }
+        .score-fair { color: #f59e0b; }
+        .score-poor { color: #ef4444; }
+        
+        .drop-zone {
+            border: 3px dashed #d1d5db;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .drop-zone.active {
+            border-color: var(--primary);
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        
+        .dark .drop-zone {
+            border-color: #4b5563;
+        }
+        
+        .dark .drop-zone.active {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+        
+        .history-item {
+            transition: all 0.2s;
+        }
+        
+        .history-item:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+        
+        .dark .history-item:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+        
+        .tab-content {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .ai-processing {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ai-processing::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+        
+        .dark .ai-processing::after {
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .floating-action-button {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, #7c3aed 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            z-index: 50;
+            transition: all 0.3s;
+        }
+        
+        .floating-action-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            background-color: var(--card);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+            transform: translateX(150%);
+            transition: transform 0.3s;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left: 4px solid #10b981;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #ef4444;
+        }
+        
+        .notification.info {
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .dark .notification {
+            background-color: #374151;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Notification System -->
+    <div id="notification" class="notification">
+        <i id="notificationIcon" class="fas fa-check-circle text-green-500"></i>
+        <div>
+            <p id="notificationTitle" class="font-semibold text-gray-800 dark:text-white">Success</p>
+            <p id="notificationMessage" class="text-sm text-gray-600 dark:text-gray-300">Operation completed successfully</p>
+        </div>
+        <button onclick="hideNotification()" class="ml-auto text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Header -->
+    <header class="gradient-bg text-white py-6 px-4 shadow-lg">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold mb-2">AI Alt Text Generator & Trainer</h1>
+                    <p class="text-indigo-100 text-lg">Professional-grade accessibility tool with advanced AI capabilities</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20 transition-all">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    <button class="p-2 rounded-full bg-white bg-opacity-10 hover:bg-opacity-20 transition-all tooltip">
+                        <i class="fas fa-question"></i>
+                        <span class="tooltiptext">Help & Documentation</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 mt-6">
+        <div class="border-b border-gray-200 dark:border-gray-700">
+            <nav class="flex space-x-8 overflow-x-auto">
+                <button onclick="switchTab('generator')" id="tab-generator" class="tab-active py-4 px-2 font-medium text-gray-700 dark:text-gray-300 transition-all whitespace-nowrap">
+                    <i class="fas fa-robot mr-2"></i>AI Generator
+                </button>
+                <button onclick="switchTab('trainer')" id="tab-trainer" class="py-4 px-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-all whitespace-nowrap">
+                    <i class="fas fa-graduation-cap mr-2"></i>Trainer
+                </button>
+                <button onclick="switchTab('guidelines')" id="tab-guidelines" class="py-4 px-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-all whitespace-nowrap">
+                    <i class="fas fa-book mr-2"></i>Guidelines
+                </button>
+                <button onclick="switchTab('history')" id="tab-history" class="py-4 px-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-all whitespace-nowrap">
+                    <i class="fas fa-history mr-2"></i>History
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="py-4 px-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-all whitespace-nowrap">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Generator Tab -->
+        <div id="content-generator" class="tab-content">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Upload Section -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Upload Image</h2>
+                    
+                    <div id="dropZone" class="drop-zone p-8 text-center cursor-pointer">
+                        <div id="uploadPrompt">
+                            <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                            <p class="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Drop an image here or click to browse</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Supports: JPG, PNG, GIF, WebP, SVG (Max 10MB)</p>
+                        </div>
+                        <img id="imagePreview" class="hidden image-preview mx-auto mt-4" alt="Uploaded image preview">
+                        <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    </div>
+                    
+                    <button onclick="document.getElementById('fileInput').click()" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center">
+                        <i class="fas fa-folder-open mr-2"></i> Choose Image
+                    </button>
+                    
+                    <!-- Context Options -->
+                    <div class="mt-6">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Image Context</label>
+                        <select id="contextSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                            <option value="informative">Informative (default)</option>
+                            <option value="decorative">Decorative</option>
+                            <option value="functional">Functional (button/link)</option>
+                            <option value="complex">Complex (chart/diagram)</option>
+                            <option value="artistic">Artistic/Creative</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Tone & Style</label>
+                        <select id="toneSelect" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white">
+                            <option value="professional">Professional</option>
+                            <option value="casual">Casual</option>
+                            <option value="technical">Technical</option>
+                            <option value="simple">Simple (plain language)</option>
+                            <option value="creative">Creative/Expressive</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Advanced Options -->
+                    <div class="mt-6">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Advanced Options</label>
+                            <button id="advancedToggle" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">Show</button>
+                        </div>
+                        <div id="advancedOptions" class="hidden space-y-4 mt-4">
+                            <div>
+                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Include People Description</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="includePeople" class="mr-2 rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Detect and describe people in images</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Color Description</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="includeColors" class="mr-2 rounded text-indigo-600 focus:ring-indigo-500" checked>
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Include color information</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Text Extraction</label>
+                                <div class="flex items-center">
+                                    <input type="checkbox" id="extractText" class="mr-2 rounded text-indigo-600 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">Extract and include text from image</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generated Alt Text Section -->
+                <div class="card p-6">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-4">Generated Alt Text</h2>
+                    
+                    <div id="generatedContent" class="hidden">
+                        <div class="bg-indigo-50 dark:bg-indigo-900 dark:bg-opacity-20 border border-indigo-200 dark:border-indigo-800 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase">AI Generated</span>
+                                <span id="charCount" class="text-xs text-gray-500 dark:text-gray-400">0 characters</span>
+                            </div>
+                            <textarea id="generatedAlt" rows="4" class="w-full bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none dark:text-white" placeholder="Alt text will appear here..."></textarea>
+                        </div>
+                        
+                        <!-- Quality Analysis -->
+                        <div id="qualityAnalysis" class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <h3 class="font-semibold text-gray-800 dark:text-white mb-3">Quality Analysis</h3>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Length Score</span>
+                                    <div class="flex items-center">
+                                        <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                            <div id="lengthBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        </div>
+                                        <span id="lengthScore" class="text-sm font-semibold dark:text-white">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Descriptiveness</span>
+                                    <div class="flex items-center">
+                                        <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                            <div id="descriptBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        </div>
+                                        <span id="descriptScore" class="text-sm font-semibold dark:text-white">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Accessibility</span>
+                                    <div class="flex items-center">
+                                        <div class="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-2">
+                                            <div id="accessBar" class="bg-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                        </div>
+                                        <span id="accessScore" class="text-sm font-semibold dark:text-white">-</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                                    <span class="text-sm font-medium text-gray-800 dark:text-white">Overall Quality</span>
+                                    <span id="overallScore" class="text-sm font-bold">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-3">
+                            <button onclick="copyAltText()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-semibold transition-all flex items-center justify-center">
+                                <i class="fas fa-copy mr-2"></i> Copy
+                            </button>
+                            <button onclick="regenerateAlt()" class="flex-1 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg font-semibold transition-all flex items-center justify-center">
+                                <i class="fas fa-sync-alt mr-2"></i> Regenerate
+                            </button>
+                            <button onclick="saveToHistory()" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-all flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Save
+                            </button>
+                        </div>
+                        
+                        <!-- Tips -->
+                        <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900 dark:bg-opacity-20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <p class="text-xs text-yellow-800 dark:text-yellow-200"><i class="fas fa-lightbulb mr-1"></i> <strong>Tip:</strong> <span id="contextTip">Keep alt text concise and descriptive, typically under 125 characters.</span></p>
+                        </div>
+                    </div>
+                    
+                    <div id="placeholderContent" class="flex items-center justify-center h-64 text-gray-400 dark:text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-file-alt text-5xl mb-4"></i>
+                            <p class="font-medium dark:text-gray-400">Upload an image to generate alt text</p>
+                        </div>
+                    </div>
+                    
+                    <!-- AI Processing Indicator -->
+                    <div id="aiProcessing" class="hidden mt-4 p-4 bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="mr-3">
+                                <div class="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">AI is analyzing your image...</p>
+                                <p class="text-xs text-blue-600 dark:text-blue-400">This may take a few seconds</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- AI Suggestions -->
+            <div id="aiSuggestions" class="hidden mt-8">
+                <div class="card p-6">
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">AI Suggestions & Variations</h2>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all cursor-pointer" onclick="useSuggestion(0)">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Concise</span>
+                                <span class="text-xs text-gray-500">72 chars</span>
+                            </div>
+                            <p class="text-sm text-gray-700 dark:text-gray-300" id="suggestion1">Professional woman working on laptop in modern office setting</p>
+                        </div>
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all cursor-pointer" onclick="useSuggestion(1)">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Detailed</span>
+                                <span class="text-xs text-gray-500">118 chars</span>
+                            </div>
+                            <p class="text-sm text-gray-700 dark:text-gray-300" id="suggestion2">Smiling businesswoman with dark hair wearing blue blazer, typing on silver laptop in bright office</p>
+                        </div>
+                        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-indigo-300 dark:hover:border-indigo-600 transition-all cursor-pointer" onclick="useSuggestion(2)">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Contextual</span>
+                                <span class="text-xs text-gray-500">94 chars</span>
+                            </div>
+                            <p class="text-sm text-gray-700 dark:text-gray-300" id="suggestion3">Female professional focused on work, using laptop computer in contemporary office environment</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainer Tab -->
+        <div id="content-trainer" class="tab-content hidden">
+            <div class="card p-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Practice Writing Alt Text</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Select Practice Image</label>
+                            <select id="practiceImageSelect" onchange="loadPracticeImage()" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white">
+                                <option value="0">Photo: Woman using laptop</option>
+                                <option value="1">Chart: Sales growth bar chart</option>
+                                <option value="2">Logo: Company brand logo</option>
+                                <option value="3">Infographic: Accessibility statistics</option>
+                                <option value="4">Button: Download icon</option>
+                                <option value="5">Product: Smartphone</option>
+                                <option value="6">Nature: Mountain landscape</option>
+                            </select>
+                        </div>
+                        
+                        <div id="practiceImageContainer" class="border-2 border-gray-300 dark:border-gray-600 rounded-lg p-4 mb-4 bg-gray-100 dark:bg-gray-800 h-64 flex items-center justify-center">
+                            <p class="text-gray-500 dark:text-gray-400 text-center" id="practiceImageDesc">Image preview will appear here</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                            <h3 class="font-semibold text-blue-800 dark:text-blue-200 mb-2">Image Details</h3>
+                            <p class="text-sm text-blue-700 dark:text-blue-300" id="imageDetails">Select an image to see details</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Your Alt Text</label>
+                        <textarea id="practiceAltInput" rows="4" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-indigo-500 mb-2 dark:bg-gray-700 dark:text-white" placeholder="Write your alt text here..."></textarea>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xs text-gray-500 dark:text-gray-400" id="practiceCharCount">0 / 125 characters</span>
+                            <button onclick="evaluatePractice()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center">
+                                <i class="fas fa-analytics mr-2"></i> Evaluate
+                            </button>
+                        </div>
+                        
+                        <!-- Evaluation Results -->
+                        <div id="evaluationResults" class="hidden">
+                            <div class="bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-lg font-semibold">Your Score</span>
+                                    <span id="practiceScore" class="text-4xl font-bold">-</span>
+                                </div>
+                                <div class="mt-2 bg-white bg-opacity-20 rounded-full h-2">
+                                    <div id="practiceScoreBar" class="bg-white h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <div class="p-3 bg-green-50 dark:bg-green-900 dark:bg-opacity-20 border border-green-200 dark:border-green-800 rounded-lg">
+                                    <h4 class="font-semibold text-green-800 dark:text-green-200 text-sm mb-1"><i class="fas fa-check-circle mr-1"></i> Strengths</h4>
+                                    <ul id="strengthsList" class="text-sm text-green-700 dark:text-green-300 space-y-1"></ul>
+                                </div>
+                                
+                                <div class="p-3 bg-orange-50 dark:bg-orange-900 dark:bg-opacity-20 border border-orange-200 dark:border-orange-800 rounded-lg">
+                                    <h4 class="font-semibold text-orange-800 dark:text-orange-200 text-sm mb-1"><i class="fas fa-exclamation-triangle mr-1"></i> Areas for Improvement</h4>
+                                    <ul id="improvementsList" class="text-sm text-orange-700 dark:text-orange-300 space-y-1"></ul>
+                                </div>
+                                
+                                <div class="p-3 bg-indigo-50 dark:bg-indigo-900 dark:bg-opacity-20 border border-indigo-200 dark:border-indigo-800 rounded-lg">
+                                    <h4 class="font-semibold text-indigo-800 dark:text-indigo-200 text-sm mb-1"><i class="fas fa-edit mr-1"></i> Suggested Alt Text</h4>
+                                    <p id="suggestedAlt" class="text-sm text-indigo-700 dark:text-indigo-300"></p>
+                                </div>
+                            </div>
+                            
+                            <button onclick="nextPracticeImage()" class="mt-4 w-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 rounded-lg font-semibold transition-all flex items-center justify-center">
+                                <i class="fas fa-arrow-right mr-2"></i> Next Image
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Practice Stats -->
+            <div class="mt-8 grid md:grid-cols-4 gap-6">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Images Practiced</p>
+                            <p id="statPracticed" class="text-3xl font-bold text-gray-800 dark:text-white">0</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-image"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Average Score</p>
+                            <p id="statAvgScore" class="text-3xl font-bold text-gray-800 dark:text-white">-</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Completion Rate</p>
+                            <p id="statCompletion" class="text-3xl font-bold text-gray-800 dark:text-white">0%</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">Current Streak</p>
+                            <p id="statStreak" class="text-3xl font-bold text-gray-800 dark:text-white">0 days</p>
+                        </div>
+                        <div class="feature-icon">
+                            <i class="fas fa-fire"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Chart -->
+            <div class="mt-8 card p-6">
+                <h2 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Your Progress</h2>
+                <div class="h-64">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guidelines Tab -->
+        <div id="content-guidelines" class="tab-content hidden">
+            <div class="card p-8">
+                <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Alt Text Best Practices</h2>
+                
+                <div class="space-y-6">
+                    <div class="border-l-4 border-indigo-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">1. Be Concise Yet Descriptive</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">Aim for 125 characters or less. Screen readers may cut off longer descriptions.</p>
+                        <div class="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✓ Good:</strong> "Woman smiling while working on laptop in modern office"</p>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✗ Bad:</strong> "Photo of a woman"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-purple-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">2. Convey Content and Function</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">Describe what the image shows and why it's there.</p>
+                        <div class="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✓ Good:</strong> "Bar chart showing 30% increase in quarterly sales"</p>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✗ Bad:</strong> "Chart"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-pink-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">3. Avoid Redundancy</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">Don't start with "Image of..." or "Picture of..." - it's implied.</p>
+                        <div class="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✓ Good:</strong> "Golden retriever playing fetch in park"</p>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✗ Bad:</strong> "Image of a golden retriever playing fetch in a park"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-blue-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">4. Context Matters</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">Decorative images should have empty alt text (alt=""). Functional images need to describe the action.</p>
+                        <div class="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>For a download button:</strong> "Download PDF report"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-green-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">5. Include Relevant Text</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">If an image contains important text, include it in the alt text.</p>
+                        <div class="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✓ Good:</strong> "Road sign reading 'Speed Limit 25'"</p>
+                        </div>
+                    </div>
+                    
+                    <div class="border-l-4 border-yellow-500 pl-4">
+                        <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">6. Don't Describe Emotions You Can't Verify</h3>
+                        <p class="text-gray-600 dark:text-gray-400 mb-2">Focus on observable details rather than assumed emotions.</p>
+                        <div class="bg-green-50 dark:bg-green-900 dark:bg-opacity-20 p-3 rounded-lg mb-2">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✓ Good:</strong> "Person smiling at camera"</p>
+                        </div>
+                        <div class="bg-red-50 dark:bg-red-900 dark:bg-opacity-20 p-3 rounded-lg">
+                            <p class="text-sm text-gray-700 dark:text-gray-300"><strong>✗ Bad:</strong> "Happy person" (smiling is observable; happiness is an assumption)</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8 p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl text-white">
+                    <h3 class="text-xl font-bold mb-2"><i class="fas fa-lightbulb mr-2"></i> Pro Tip</h3>
+                    <p>Ask yourself: "If I couldn't see this image, what would I need to know?" Write alt text that answers that question clearly and concisely.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="content-history" class="tab-content hidden">
+            <div class="card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Generation History</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="exportHistory()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-semibold transition-all flex items-center">
+                            <i class="fas fa-download mr-2"></i> Export
+                        </button>
+                        <button onclick="clearHistory()" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold transition-all flex items-center">
+                            <i class="fas fa-trash mr-2"></i> Clear All
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2 mb-4">
+                    <button onclick="filterHistory('all')" id="filter-all" class="px-3 py-1 bg-indigo-600 text-white rounded-full text-sm font-medium">All</button>
+                    <button onclick="filterHistory('informative')" id="filter-informative" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Informative</button>
+                    <button onclick="filterHistory('decorative')" id="filter-decorative" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Decorative</button>
+                    <button onclick="filterHistory('functional')" id="filter-functional" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium hover:bg-gray-300 dark:hover:bg-gray-600">Functional</button>
+                </div>
+                
+                <div id="historyList" class="space-y-3 max-h-96 overflow-y-auto">
+                    <div class="text-center py-12 text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-history text-5xl mb-4"></i>
+                        <p class="font-medium">No history yet</p>
+                        <p class="text-sm">Generated alt text will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="content-analytics" class="tab-content hidden">
+            <div class="card p-6">
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Usage Analytics</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Alt Text Length Distribution</h3>
+                        <div class="h-64">
+                            <canvas id="lengthChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Context Usage</h3>
+                        <div class="h-64">
+                            <canvas id="contextChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Quality Score Over Time</h3>
+                    <div class="h-64">
+                        <canvas id="qualityChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="mt-8 grid md:grid-cols-3 gap-6">
+                    <div class="p-4 bg-indigo-50 dark:bg-indigo-900 dark:bg-opacity-20 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="mr-4">
+                                <i class="fas fa-bolt text-2xl text-indigo-600 dark:text-indigo-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Most Used Context</p>
+                                <p id="mostUsedContext" class="text-lg font-bold text-gray-800 dark:text-white">Informative</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-green-50 dark:bg-green-900 dark:bg-opacity-20 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="mr-4">
+                                <i class="fas fa-chart-line text-2xl text-green-600 dark:text-green-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Average Quality Score</p>
+                                <p id="avgQualityScore" class="text-lg font-bold text-gray-800 dark:text-white">87%</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 bg-purple-50 dark:bg-purple-900 dark:bg-opacity-20 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="mr-4">
+                                <i class="fas fa-calculator text-2xl text-purple-600 dark:text-purple-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Total Generations</p>
+                                <p id="totalGenerations" class="text-lg font-bold text-gray-800 dark:text-white">142</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Action Button -->
+    <div class="floating-action-button tooltip" onclick="quickGenerate()">
+        <i class="fas fa-bolt"></i>
+        <span class="tooltiptext">Quick Generate</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-bold mb-4">AI Alt Text Generator</h3>
+                    <p class="text-gray-300">Professional-grade accessibility tool with cutting-edge AI capabilities for creating inclusive web experiences.</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Resources</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li><a href="#" class="hover:text-white transition-colors">Web Accessibility Guidelines</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Alt Text Best Practices</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">WCAG 2.1 Compliance</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">API Documentation</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold mb-4">Connect</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        <a href="#" class="text-gray-300 hover:text-white transition-colors">
+                            <i class="fas fa-envelope text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-6 text-center text-gray-400">
+                <p>© 2025 AI-Powered Alt Text Generator & Trainer. Built with accessibility in mind.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global state
+        let currentImage = null;
+        let historyItems = JSON.parse(localStorage.getItem('altTextHistory')) || [];
+        let practiceStats = JSON.parse(localStorage.getItem('practiceStats')) || {
+            practiced: 0,
+            totalScore: 0,
+            completed: 0,
+            streak: 0,
+            lastPractice: null,
+            scores: []
+        };
+        
+        let currentSuggestions = [];
+        let isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        const practiceImages = [
+            {
+                desc: "Professional woman with dark hair wearing a blue blazer, smiling while typing on a silver laptop in a bright modern office",
+                context: "informative",
+                ideal: "Woman smiling while working on laptop in modern office",
+                keywords: ["woman", "laptop", "office", "working", "professional"]
+            },
+            {
+                desc: "Vertical bar chart with 4 blue bars showing quarterly sales data from Q1 to Q4, with Q4 bar highest at approximately 30% above baseline",
+                context: "complex",
+                ideal: "Bar chart showing quarterly sales growth with Q4 30% above Q1",
+                keywords: ["bar chart", "sales", "quarterly", "growth", "data"]
+            },
+            {
+                desc: "Circular logo with the letters 'AC' in white on a purple gradient background",
+                context: "functional",
+                ideal: "AccessCorp company logo",
+                keywords: ["logo", "brand", "company"]
+            },
+            {
+                desc: "Infographic with icons and statistics showing '15% of global population has a disability' and '1 billion people benefit from accessible design'",
+                context: "complex",
+                ideal: "Infographic showing 15% of people have disabilities and 1 billion benefit from accessible design",
+                keywords: ["infographic", "statistics", "disability", "accessibility", "data"]
+            },
+            {
+                desc: "Green circular button with white downward arrow icon in the center",
+                context: "functional",
+                ideal: "Download",
+                keywords: ["download", "button", "action"]
+            },
+            {
+                desc: "Latest model smartphone with large screen displaying a colorful app interface, held in a person's hand",
+                context: "informative",
+                ideal: "Person holding latest smartphone with colorful app interface visible",
+                keywords: ["smartphone", "hand", "app", "screen", "mobile"]
+            },
+            {
+                desc: "Snow-capped mountain peak during sunrise with pink and orange sky in the background",
+                context: "informative",
+                ideal: "Snow-capped mountain at sunrise with colorful sky",
+                keywords: ["mountain", "snow", "sunrise", "sky", "landscape"]
+            }
+        ];
+
+        // Initialize the app
+        function initApp() {
+            // Set dark mode if enabled
+            if (isDarkMode) {
+                document.body.classList.add('dark');
+                document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+            }
+            
+            // Render history if there are items
+            if (historyItems.length > 0) {
+                renderHistory();
+            }
+            
+            // Initialize charts
+            initCharts();
+            
+            // Update practice stats
+            updatePracticeStats();
+            
+            // Check and update streak
+            updateStreak();
+        }
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('tab-active'));
+            
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).classList.add('tab-active');
+            
+            // Initialize charts when switching to analytics tab
+            if (tabName === 'analytics') {
+                setTimeout(initCharts, 100);
+            }
+        }
+
+        // Theme toggle
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            isDarkMode = !isDarkMode;
+            document.body.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            if (isDarkMode) {
+                this.innerHTML = '<i class="fas fa-sun"></i>';
+            } else {
+                this.innerHTML = '<i class="fas fa-moon"></i>';
+            }
+            
+            // Re-initialize charts with new theme
+            initCharts();
+        });
+
+        // Advanced options toggle
+        document.getElementById('advancedToggle').addEventListener('click', function() {
+            const options = document.getElementById('advancedOptions');
+            const isHidden = options.classList.contains('hidden');
+            
+            if (isHidden) {
+                options.classList.remove('hidden');
+                this.textContent = 'Hide';
+            } else {
+                options.classList.add('hidden');
+                this.textContent = 'Show';
+            }
+        });
+
+        // File upload handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const uploadPrompt = document.getElementById('uploadPrompt');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('active');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleImageUpload(file);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleImageUpload(file);
+            }
+        });
+
+        function handleImageUpload(file) {
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('Error', 'File size must be less than 10MB', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                currentImage = e.target.result;
+                imagePreview.src = currentImage;
+                imagePreview.classList.remove('hidden');
+                uploadPrompt.classList.add('hidden');
+                
+                // Show AI processing indicator
+                document.getElementById('aiProcessing').classList.remove('hidden');
+                
+                // Simulate AI processing time
+                setTimeout(() => {
+                    document.getElementById('aiProcessing').classList.add('hidden');
+                    generateAltText();
+                }, 1500);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function generateAltText() {
+            const context = document.getElementById('contextSelect').value;
+            const tone = document.getElementById('toneSelect').value;
+            
+            document.getElementById('placeholderContent').classList.add('hidden');
+            document.getElementById('generatedContent').classList.remove('hidden');
+            
+            let altText = generateSmartAltText(context, tone);
+            
+            const textarea = document.getElementById('generatedAlt');
+            textarea.value = altText;
+            
+            // Generate suggestions
+            generateSuggestions(altText, context, tone);
+            
+            updateCharCount();
+            analyzeQuality(altText);
+            updateContextTip(context);
+        }
+
+        function generateSmartAltText(context, tone) {
+            // In a real implementation, this would call an AI API
+            // For this demo, we're using sophisticated templates
+            
+            const templates = {
+                informative: [
+                    "Professional woman working on laptop computer in modern office setting",
+                    "Businessperson presenting data on screen during team meeting",
+                    "Colleagues collaborating around table with documents and laptops",
+                    "Person using smartphone while sitting at contemporary workstation",
+                    "Team discussion in bright conference room with whiteboard"
+                ],
+                decorative: "",
+                functional: [
+                    "Download report",
+                    "Contact support",
+                    "View product details",
+                    "Add to cart",
+                    "Search database"
+                ],
+                complex: [
+                    "Line graph showing upward trend with 45% growth over five years",
+                    "Pie chart displaying market share distribution among competitors",
+                    "Flowchart illustrating customer journey in six stages",
+                    "Organization chart showing company hierarchy and departments",
+                    "Infographic comparing features of different subscription plans"
+                ],
+                artistic: [
+                    "Abstract painting with bold brush strokes in blue and gold tones",
+                    "Sculpture of human form in bronze with textured surface",
+                    "Digital artwork featuring geometric patterns and vibrant colors",
+                    "Photograph of urban landscape with dramatic lighting and shadows",
+                    "Mixed media collage incorporating paper, fabric, and found objects"
+                ]
+            };
+
+            if (context === 'decorative') {
+                return '';
+            }
+
+            const contextTemplates = templates[context] || templates.informative;
+            let altText = contextTemplates[Math.floor(Math.random() * contextTemplates.length)];
+
+            // Adjust based on tone
+            if (tone === 'casual') {
+                altText = altText.replace(/professional|businessperson|colleagues/g, 
+                    ['person', 'someone', 'people'][Math.floor(Math.random() * 3)]);
+            } else if (tone === 'technical') {
+                altText = altText.replace(/working on|presenting|collaborating/g, 
+                    ['operating', 'demonstrating', 'coordinating on'][Math.floor(Math.random() * 3)]);
+            } else if (tone === 'creative') {
+                altText = altText.replace(/setting|meeting|workstation/g, 
+                    ['environment', 'gathering', 'creative space'][Math.floor(Math.random() * 3)]);
+            }
+
+            return altText;
+        }
+
+        function generateSuggestions(baseAlt, context, tone) {
+            // Generate variations of the base alt text
+            currentSuggestions = [
+                baseAlt,
+                baseAlt.replace(/in modern office setting/, "at contemporary workspace"),
+                baseAlt.replace(/Professional woman/, "Business professional")
+            ];
+            
+            // Update the suggestion elements
+            document.getElementById('suggestion1').textContent = currentSuggestions[0];
+            document.getElementById('suggestion2').textContent = currentSuggestions[1];
+            document.getElementById('suggestion3').textContent = currentSuggestions[2];
+            
+            // Show the suggestions section
+            document.getElementById('aiSuggestions').classList.remove('hidden');
+        }
+
+        function useSuggestion(index) {
+            document.getElementById('generatedAlt').value = currentSuggestions[index];
+            updateCharCount();
+            analyzeQuality(currentSuggestions[index]);
+        }
+
+        function updateCharCount() {
+            const text = document.getElementById('generatedAlt').value;
+            document.getElementById('charCount').textContent = `${text.length} characters`;
+        }
+
+        function analyzeQuality(text) {
+            const length = text.length;
+            let lengthScore = 0;
+            
+            if (length >= 25 && length <= 125) {
+                lengthScore = 100;
+            } else if (length > 125 && length <= 150) {
+                lengthScore = 80;
+            } else if (length < 25 && length >= 10) {
+                lengthScore = 60;
+            } else {
+                lengthScore = 30;
+            }
+
+            const descriptWords = ['showing', 'displaying', 'featuring', 'with', 'in', 'of', 'wearing'];
+            const hasDescriptors = descriptWords.some(word => text.toLowerCase().includes(word));
+            const wordCount = text.split(' ').length;
+            let descriptScore = Math.min(100, (wordCount * 15));
+            if (hasDescriptors) descriptScore = Math.min(100, descriptScore + 20);
+
+            const avoidWords = ['image of', 'picture of', 'photo of'];
+            const hasAvoidWords = avoidWords.some(phrase => text.toLowerCase().includes(phrase));
+            if (hasAvoidWords) descriptScore -= 20;
+
+            // Accessibility score based on WCAG guidelines
+            let accessScore = 80;
+            if (text.length === 0) {
+                accessScore = 100; // Empty alt text is valid for decorative images
+            } else if (text.length > 150) {
+                accessScore = 60;
+            } else if (hasAvoidWords) {
+                accessScore = 70;
+            }
+
+            const overallScore = Math.round((lengthScore + descriptScore + accessScore) / 3);
+
+            // Update progress bars
+            document.getElementById('lengthBar').style.width = `${lengthScore}%`;
+            document.getElementById('descriptBar').style.width = `${descriptScore}%`;
+            document.getElementById('accessBar').style.width = `${accessScore}%`;
+            
+            // Update scores
+            document.getElementById('lengthScore').textContent = `${lengthScore}/100`;
+            document.getElementById('descriptScore').textContent = `${descriptScore}/100`;
+            document.getElementById('accessScore').textContent = `${accessScore}/100`;
+            
+            // Update overall score with color coding
+            let scoreClass = 'score-poor';
+            let scoreText = 'Needs Work';
+            if (overallScore >= 90) { scoreClass = 'score-excellent'; scoreText = 'Excellent'; }
+            else if (overallScore >= 75) { scoreClass = 'score-good'; scoreText = 'Good'; }
+            else if (overallScore >= 60) { scoreClass = 'score-fair'; scoreText = 'Fair'; }
+            
+            const scoreEl = document.getElementById('overallScore');
+            scoreEl.textContent = `${overallScore}/100 - ${scoreText}`;
+            scoreEl.className = `text-sm font-bold ${scoreClass}`;
+        }
+
+        function updateContextTip(context) {
+            const tips = {
+                informative: "Keep alt text concise and descriptive, typically under 125 characters.",
+                decorative: "Decorative images should have empty alt text (alt=\"\") to be skipped by screen readers.",
+                functional: "Describe the action or destination, not the image itself (e.g., 'Download report' not 'Download icon').",
+                complex: "For complex images, provide a brief description and consider adding a longer description nearby.",
+                artistic: "For artistic images, describe the visual elements, style, and emotional impact if relevant."
+            };
+            document.getElementById('contextTip').textContent = tips[context];
+        }
+
+        function copyAltText() {
+            const text = document.getElementById('generatedAlt').value;
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification('Success', 'Alt text copied to clipboard!', 'success');
+            });
+        }
+
+        function regenerateAlt() {
+            // Show AI processing indicator
+            document.getElementById('aiProcessing').classList.remove('hidden');
+            
+            // Simulate AI processing time
+            setTimeout(() => {
+                document.getElementById('aiProcessing').classList.add('hidden');
+                generateAltText();
+            }, 1000);
+        }
+
+        function saveToHistory() {
+            const altText = document.getElementById('generatedAlt').value;
+            if (!altText) {
+                showNotification('Error', 'Please generate alt text first', 'error');
+                return;
+            }
+            
+            const historyItem = {
+                timestamp: new Date(),
+                altText: altText,
+                context: document.getElementById('contextSelect').value,
+                tone: document.getElementById('toneSelect').value,
+                image: currentImage
+            };
+            
+            historyItems.unshift(historyItem);
+            if (historyItems.length > 50) historyItems.pop();
+            
+            // Save to localStorage
+            localStorage.setItem('altTextHistory', JSON.stringify(historyItems));
+            
+            renderHistory();
+            showNotification('Success', 'Saved to history!', 'success');
+        }
+
+        function renderHistory() {
+            const listEl = document.getElementById('historyList');
+            
+            if (historyItems.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12 text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-history text-5xl mb-4"></i>
+                        <p class="font-medium">No history yet</p>
+                        <p class="text-sm">Generated alt text will appear here</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listEl.innerHTML = historyItems.map((item, idx) => `
+                <div class="history-item p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <span class="badge badge-info">${item.context}</span>
+                            <span class="badge badge-warning ml-2">${item.tone}</span>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${formatTime(item.timestamp)}</span>
+                    </div>
+                    <p class="text-gray-800 dark:text-gray-200 text-sm mb-2">"${item.altText}"</p>
+                    <div class="flex space-x-2">
+                        <button onclick="copyHistoryItem(${idx})" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold flex items-center">
+                            <i class="fas fa-copy mr-1"></i> Copy
+                        </button>
+                        <button onclick="deleteHistoryItem(${idx})" class="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold flex items-center">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diff = Math.floor((now - new Date(date)) / 1000);
+            
+            if (diff < 60) return 'Just now';
+            if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+            return new Date(date).toLocaleDateString();
+        }
+
+        function copyHistoryItem(idx) {
+            navigator.clipboard.writeText(historyItems[idx].altText);
+            showNotification('Success', 'Copied to clipboard!', 'success');
+        }
+
+        function deleteHistoryItem(idx) {
+            historyItems.splice(idx, 1);
+            localStorage.setItem('altTextHistory', JSON.stringify(historyItems));
+            renderHistory();
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all history? This action cannot be undone.')) {
+                historyItems = [];
+                localStorage.setItem('altTextHistory', JSON.stringify(historyItems));
+                renderHistory();
+                showNotification('Success', 'History cleared', 'success');
+            }
+        }
+
+        function filterHistory(filter) {
+            // Update active filter button
+            document.querySelectorAll('#content-history button').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            });
+            
+            document.getElementById(`filter-${filter}`).classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            document.getElementById(`filter-${filter}`).classList.add('bg-indigo-600', 'text-white');
+            
+            // Filter history items
+            let filteredItems = historyItems;
+            if (filter !== 'all') {
+                filteredItems = historyItems.filter(item => item.context === filter);
+            }
+            
+            // Render filtered items
+            const listEl = document.getElementById('historyList');
+            
+            if (filteredItems.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12 text-gray-400 dark:text-gray-500">
+                        <i class="fas fa-filter text-5xl mb-4"></i>
+                        <p class="font-medium">No ${filter} history</p>
+                        <p class="text-sm">Try a different filter</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            listEl.innerHTML = filteredItems.map((item, idx) => `
+                <div class="history-item p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <span class="badge badge-info">${item.context}</span>
+                            <span class="badge badge-warning ml-2">${item.tone}</span>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${formatTime(item.timestamp)}</span>
+                    </div>
+                    <p class="text-gray-800 dark:text-gray-200 text-sm mb-2">"${item.altText}"</p>
+                    <div class="flex space-x-2">
+                        <button onclick="copyHistoryItem(${historyItems.indexOf(item)})" class="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-semibold flex items-center">
+                            <i class="fas fa-copy mr-1"></i> Copy
+                        </button>
+                        <button onclick="deleteHistoryItem(${historyItems.indexOf(item)})" class="text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-semibold flex items-center">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function exportHistory() {
+            if (historyItems.length === 0) {
+                showNotification('Error', 'No history to export', 'error');
+                return;
+            }
+            
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + "Timestamp,Context,Tone,Alt Text\n"
+                + historyItems.map(item => 
+                    `"${new Date(item.timestamp).toLocaleString()}","${item.context}","${item.tone}","${item.altText}"`
+                ).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "alt_text_history.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Success', 'History exported as CSV', 'success');
+        }
+
+        // Practice mode functions
+        function loadPracticeImage() {
+            const idx = parseInt(document.getElementById('practiceImageSelect').value);
+            const image = practiceImages[idx];
+            
+            document.getElementById('practiceImageDesc').textContent = image.desc;
+            document.getElementById('imageDetails').innerHTML = `
+                <strong>Context:</strong> ${image.context}<br>
+                <strong>Key elements to include:</strong> ${image.keywords.join(', ')}
+            `;
+            
+            document.getElementById('evaluationResults').classList.add('hidden');
+            document.getElementById('practiceAltInput').value = '';
+            updatePracticeCharCount();
+        }
+
+        document.getElementById('practiceAltInput').addEventListener('input', updatePracticeCharCount);
+
+        function updatePracticeCharCount() {
+            const text = document.getElementById('practiceAltInput').value;
+            const count = text.length;
+            const countEl = document.getElementById('practiceCharCount');
+            countEl.textContent = `${count} / 125 characters`;
+            
+            if (count > 125) {
+                countEl.classList.add('text-red-600', 'dark:text-red-400');
+            } else {
+                countEl.classList.remove('text-red-600', 'dark:text-red-400');
+            }
+        }
+
+        function evaluatePractice() {
+            const userAlt = document.getElementById('practiceAltInput').value.trim();
+            if (!userAlt) {
+                showNotification('Error', 'Please write some alt text first!', 'error');
+                return;
+            }
+            
+            const idx = parseInt(document.getElementById('practiceImageSelect').value);
+            const image = practiceImages[idx];
+            
+            let score = 0;
+            const strengths = [];
+            const improvements = [];
+            
+            // Length check
+            if (userAlt.length >= 20 && userAlt.length <= 125) {
+                score += 25;
+                strengths.push('Good length - concise and informative');
+            } else if (userAlt.length > 125) {
+                improvements.push('Alt text is too long - try to keep it under 125 characters');
+            } else {
+                improvements.push('Alt text is too brief - add more descriptive details');
+            }
+            
+            // Keyword inclusion
+            const matchedKeywords = image.keywords.filter(kw => 
+                userAlt.toLowerCase().includes(kw.toLowerCase())
+            );
+            const keywordScore = (matchedKeywords.length / image.keywords.length) * 35;
+            score += keywordScore;
+            
+            if (matchedKeywords.length >= 3) {
+                strengths.push('Includes key image elements');
+            } else {
+                improvements.push(`Consider mentioning: ${image.keywords.filter(kw => 
+                    !userAlt.toLowerCase().includes(kw.toLowerCase())
+                ).join(', ')}`);
+            }
+            
+            // Avoid redundancy
+            const redundantPhrases = ['image of', 'picture of', 'photo of', 'graphic of'];
+            const hasRedundancy = redundantPhrases.some(phrase => 
+                userAlt.toLowerCase().includes(phrase)
+            );
+            
+            if (!hasRedundancy) {
+                score += 20;
+                strengths.push('No redundant phrases like "image of"');
+            } else {
+                improvements.push('Avoid phrases like "image of" - it\'s already implied');
+            }
+            
+            // Specificity
+            const specificWords = userAlt.split(' ').filter(word => word.length > 4).length;
+            if (specificWords >= 4) {
+                score += 20;
+                strengths.push('Good level of specific detail');
+            } else {
+                improvements.push('Add more specific descriptive words');
+            }
+            
+            score = Math.min(100, Math.round(score));
+            
+            // Update stats
+            const today = new Date().toDateString();
+            if (practiceStats.lastPractice !== today) {
+                practiceStats.streak = practiceStats.lastPractice && 
+                    (new Date() - new Date(practiceStats.lastPractice)) < 2 * 24 * 60 * 60 * 1000 
+                    ? practiceStats.streak + 1 : 1;
+                practiceStats.lastPractice = today;
+            }
+            
+            practiceStats.practiced++;
+            practiceStats.totalScore += score;
+            practiceStats.completed++;
+            practiceStats.scores.push({
+                date: today,
+                score: score
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('practiceStats', JSON.stringify(practiceStats));
+            
+            updatePracticeStats();
+            
+            // Display results
+            document.getElementById('practiceScore').textContent = score;
+            document.getElementById('practiceScoreBar').style.width = `${score}%`;
+            
+            document.getElementById('strengthsList').innerHTML = strengths.length > 0
+                ? strengths.map(s => `<li>• ${s}</li>`).join('')
+                : '<li>Keep practicing to improve!</li>';
+            
+            document.getElementById('improvementsList').innerHTML = improvements.length > 0
+                ? improvements.map(i => `<li>• ${i}</li>`).join('')
+                : '<li>Excellent work - no major improvements needed!</li>';
+            
+            document.getElementById('suggestedAlt').textContent = image.ideal;
+            
+            document.getElementById('evaluationResults').classList.remove('hidden');
+            
+            // Update progress chart
+            updateProgressChart();
+        }
+
+        function updatePracticeStats() {
+            document.getElementById('statPracticed').textContent = practiceStats.practiced;
+            
+            const avgScore = practiceStats.practiced > 0 
+                ? Math.round(practiceStats.totalScore / practiceStats.practiced)
+                : 0;
+            document.getElementById('statAvgScore').textContent = avgScore > 0 ? avgScore : '-';
+            
+            const completion = Math.round((practiceStats.completed / practiceImages.length) * 100);
+            document.getElementById('statCompletion').textContent = `${completion}%`;
+            
+            document.getElementById('statStreak').textContent = `${practiceStats.streak} days`;
+        }
+
+        function updateStreak() {
+            const today = new Date().toDateString();
+            if (practiceStats.lastPractice !== today) {
+                // Check if streak should be reset (more than 2 days since last practice)
+                if (practiceStats.lastPractice && 
+                    (new Date() - new Date(practiceStats.lastPractice)) >= 2 * 24 * 60 * 60 * 1000) {
+                    practiceStats.streak = 0;
+                    localStorage.setItem('practiceStats', JSON.stringify(practiceStats));
+                    updatePracticeStats();
+                }
+            }
+        }
+
+        function nextPracticeImage() {
+            const select = document.getElementById('practiceImageSelect');
+            const currentIdx = parseInt(select.value);
+            const nextIdx = (currentIdx + 1) % practiceImages.length;
+            select.value = nextIdx;
+            loadPracticeImage();
+        }
+
+        function updateProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            
+            // Get last 7 scores or all if less than 7
+            const recentScores = practiceStats.scores.slice(-7);
+            const labels = recentScores.map(score => {
+                const date = new Date(score.date);
+                return `${date.getMonth()+1}/${date.getDate()}`;
+            });
+            
+            const data = recentScores.map(score => score.score);
+            
+            // If we have a chart already, destroy it
+            if (window.progressChart) {
+                window.progressChart.destroy();
+            }
+            
+            window.progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Score',
+                        data: data,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: document.body.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                            titleColor: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937',
+                            bodyColor: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280',
+                            borderColor: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        // Analytics functions
+        function initCharts() {
+            initLengthChart();
+            initContextChart();
+            initQualityChart();
+            updateAnalyticsStats();
+        }
+
+        function initLengthChart() {
+            const ctx = document.getElementById('lengthChart').getContext('2d');
+            
+            // Calculate length distribution
+            const lengthRanges = [
+                { min: 0, max: 0, label: 'Empty', count: 0 },
+                { min: 1, max: 25, label: '1-25', count: 0 },
+                { min: 26, max: 75, label: '26-75', count: 0 },
+                { min: 76, max: 125, label: '76-125', count: 0 },
+                { min: 126, max: 999, label: '126+', count: 0 }
+            ];
+            
+            historyItems.forEach(item => {
+                const length = item.altText.length;
+                for (const range of lengthRanges) {
+                    if (length >= range.min && length <= range.max) {
+                        range.count++;
+                        break;
+                    }
+                }
+            });
+            
+            // If we have a chart already, destroy it
+            if (window.lengthChart) {
+                window.lengthChart.destroy();
+            }
+            
+            window.lengthChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: lengthRanges.map(range => range.label),
+                    datasets: [{
+                        label: 'Count',
+                        data: lengthRanges.map(range => range.count),
+                        backgroundColor: [
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(239, 68, 68)',
+                            'rgb(245, 158, 11)',
+                            'rgb(59, 130, 246)',
+                            'rgb(16, 185, 129)',
+                            'rgb(139, 92, 246)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: document.body.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                            titleColor: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937',
+                            bodyColor: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280',
+                            borderColor: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        function initContextChart() {
+            const ctx = document.getElementById('contextChart').getContext('2d');
+            
+            // Calculate context distribution
+            const contextCounts = {};
+            historyItems.forEach(item => {
+                contextCounts[item.context] = (contextCounts[item.context] || 0) + 1;
+            });
+            
+            const labels = Object.keys(contextCounts);
+            const data = Object.values(contextCounts);
+            
+            // If we have a chart already, destroy it
+            if (window.contextChart) {
+                window.contextChart.destroy();
+            }
+            
+            window.contextChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            'rgba(79, 70, 229, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(139, 92, 246, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(79, 70, 229)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)',
+                            'rgb(239, 68, 68)',
+                            'rgb(139, 92, 246)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280',
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: document.body.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                            titleColor: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937',
+                            bodyColor: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280',
+                            borderColor: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        function initQualityChart() {
+            const ctx = document.getElementById('qualityChart').getContext('2d');
+            
+            // Calculate quality scores over time (last 10 items)
+            const recentItems = historyItems.slice(0, 10).reverse();
+            const labels = recentItems.map(item => {
+                const date = new Date(item.timestamp);
+                return `${date.getMonth()+1}/${date.getDate()}`;
+            });
+            
+            const qualityScores = recentItems.map(item => {
+                const text = item.altText;
+                const length = text.length;
+                let score = 0;
+                
+                if (length >= 25 && length <= 125) score += 40;
+                else if (length > 0 && length < 25) score += 20;
+                else if (length > 125) score += 10;
+                
+                const hasDescriptors = ['showing', 'displaying', 'featuring', 'with', 'in', 'of'].some(word => 
+                    text.toLowerCase().includes(word)
+                );
+                if (hasDescriptors) score += 30;
+                
+                const hasAvoidWords = ['image of', 'picture of', 'photo of'].some(phrase => 
+                    text.toLowerCase().includes(phrase)
+                );
+                if (!hasAvoidWords) score += 30;
+                
+                return score;
+            });
+            
+            // If we have a chart already, destroy it
+            if (window.qualityChart) {
+                window.qualityChart.destroy();
+            }
+            
+            window.qualityChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Quality Score',
+                        data: qualityScores,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: document.body.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: document.body.classList.contains('dark') ? '#1f2937' : '#ffffff',
+                            titleColor: document.body.classList.contains('dark') ? '#f9fafb' : '#1f2937',
+                            bodyColor: document.body.classList.contains('dark') ? '#d1d5db' : '#6b7280',
+                            borderColor: document.body.classList.contains('dark') ? '#374151' : '#e5e7eb',
+                            borderWidth: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateAnalyticsStats() {
+            // Most used context
+            const contextCounts = {};
+            historyItems.forEach(item => {
+                contextCounts[item.context] = (contextCounts[item.context] || 0) + 1;
+            });
+            
+            let mostUsedContext = 'None';
+            let maxCount = 0;
+            for (const context in contextCounts) {
+                if (contextCounts[context] > maxCount) {
+                    mostUsedContext = context;
+                    maxCount = contextCounts[context];
+                }
+            }
+            
+            document.getElementById('mostUsedContext').textContent = mostUsedContext.charAt(0).toUpperCase() + mostUsedContext.slice(1);
+            
+            // Average quality score
+            let totalQuality = 0;
+            historyItems.forEach(item => {
+                const text = item.altText;
+                const length = text.length;
+                let score = 0;
+                
+                if (length >= 25 && length <= 125) score += 40;
+                else if (length > 0 && length < 25) score += 20;
+                else if (length > 125) score += 10;
+                
+                const hasDescriptors = ['showing', 'displaying', 'featuring', 'with', 'in', 'of'].some(word => 
+                    text.toLowerCase().includes(word)
+                );
+                if (hasDescriptors) score += 30;
+                
+                const hasAvoidWords = ['image of', 'picture of', 'photo of'].some(phrase => 
+                    text.toLowerCase().includes(phrase)
+                );
+                if (!hasAvoidWords) score += 30;
+                
+                totalQuality += score;
+            });
+            
+            const avgQuality = historyItems.length > 0 ? Math.round(totalQuality / historyItems.length) : 0;
+            document.getElementById('avgQualityScore').textContent = `${avgQuality}%`;
+            
+            // Total generations
+            document.getElementById('totalGenerations').textContent = historyItems.length;
+        }
+
+        // Notification system
+        function showNotification(title, message, type) {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const notificationTitle = document.getElementById('notificationTitle');
+            const notificationMessage = document.getElementById('notificationMessage');
+            
+            // Set content and style based on type
+            notificationTitle.textContent = title;
+            notificationMessage.textContent = message;
+            
+            // Remove all type classes
+            notification.classList.remove('success', 'error', 'info');
+            
+            // Add the appropriate class and icon
+            if (type === 'success') {
+                notification.classList.add('success');
+                icon.className = 'fas fa-check-circle text-green-500';
+            } else if (type === 'error') {
+                notification.classList.add('error');
+                icon.className = 'fas fa-exclamation-circle text-red-500';
+            } else {
+                notification.classList.add('info');
+                icon.className = 'fas fa-info-circle text-blue-500';
+            }
+            
+            // Show notification
+            notification.classList.add('show');
+            
+            // Auto hide after 5 seconds
+            setTimeout(hideNotification, 5000);
+        }
+
+        function hideNotification() {
+            document.getElementById('notification').classList.remove('show');
+        }
+
+        // Quick generate function for FAB
+        function quickGenerate() {
+            // Switch to generator tab
+            switchTab('generator');
+            
+            // If no image is uploaded, trigger file input
+            if (!currentImage) {
+                document.getElementById('fileInput').click();
+            } else {
+                // Otherwise regenerate alt text
+                regenerateAlt();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('generatedAlt').addEventListener('input', function() {
+            updateCharCount();
+            analyzeQuality(this.value);
+        });
+
+        document.getElementById('contextSelect').addEventListener('change', function() {
+            if (currentImage) generateAltText();
+            updateContextTip(this.value);
+        });
+
+        document.getElementById('toneSelect').addEventListener('change', function() {
+            if (currentImage) generateAltText();
+        });
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
